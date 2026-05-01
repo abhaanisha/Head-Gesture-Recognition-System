@@ -4,12 +4,17 @@
 ### TinyML-Based Assistive Communication for Elderly & Disabled Individuals
 
 [![IISc](https://img.shields.io/badge/IISc-Edge_AI_Course-blue?style=for-the-badge)](https://iisc.ac.in)
+[![Course](https://img.shields.io/badge/CP_330-Edge_AI-purple?style=for-the-badge)](https://iisc.ac.in)
 [![Platform](https://img.shields.io/badge/Platform-Arduino_Nicla_Vision-teal?style=for-the-badge)](https://store.arduino.cc/products/nicla-vision)
 [![TensorFlow Lite](https://img.shields.io/badge/TensorFlow-Lite_INT8-orange?style=for-the-badge&logo=tensorflow)](https://www.tensorflow.org/lite)
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
+**Course:** CP 330 — Edge AI &nbsp;|&nbsp; **Instructor:** Prof. Pandarasamy Arjunan &nbsp;|&nbsp; Indian Institute of Science, Bangalore
+
 *A real-time, cloud-free gesture recognition system that translates head movements into meaningful messages — running entirely on a wearable microcontroller.*
+
+[![Demo Video](https://img.shields.io/badge/▶_Watch_Demo-SharePoint-0078D4?style=for-the-badge&logo=microsoft)](https://indianinstituteofscience-my.sharepoint.com/:v:/g/personal/abhas_iisc_ac_in/IQCmHS_j7puyQ6OWcKqMe5GkAeruAGz5R6FupJL88lnMZLk?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=pOxfAL)
 
 </div>
 
@@ -28,7 +33,9 @@
 9. [TinyML Deployment](#9-tinyml-deployment)
 10. [Repository Structure](#10-repository-structure)
 11. [Getting Started](#11-getting-started)
-12. [Team](#12-team)
+12. [Demo](#12-demo)
+13. [Team](#13-team)
+14. [References](#14-references)
 
 ---
 
@@ -102,6 +109,17 @@ The system uses **two Arduino Nicla Vision boards** — one on each temple — f
 <img src="doc/Figure/Wire Connection Diagram.png" alt="Wiring Diagram" width="600"/>
 <br><em>Complete wiring: UART (Slave→Master), I2C OLED, Buzzer</em>
 </div>
+
+<br>
+
+### Physical Setup
+
+<table>
+<tr>
+<td align="center"><img src="doc/Figure/Setup_image_1.jpeg" alt="Setup Photo 1" width="360"/><br><em>Physical hardware setup — side view</em></td>
+<td align="center"><img src="doc/Figure/Setup_image_2.jpeg" alt="Setup Photo 2" width="360"/><br><em>Wearable headband with both Nicla Vision boards mounted</em></td>
+</tr>
+</table>
 
 <br>
 
@@ -280,12 +298,19 @@ Total Parameters: 30,663  |  INT8 Size: ~33.6 KB
 
 | Model | Test Accuracy |
 |---|---|
-| Decision Tree | — |
-| Random Forest | — |
-| **Keras TinyMLP** | **≥ 88%** |
-| INT8 TFLite | ≥ 88% (< 2% drop) |
+| Decision Tree | **100.00%** |
+| Random Forest | **100.00%** |
+| **Keras TinyMLP** | **100.00%** |
+| INT8 TFLite | **100.00%** |
 
 </div>
+
+**Dataset Summary:**
+```
+Raw samples loaded        : 141,751
+Windows (50 samples, 50%) :   5,661
+Feature dimensionality    :     150
+```
 
 <br>
 
@@ -314,8 +339,8 @@ Total Parameters: 30,663  |  INT8 Size: ~33.6 KB
 | File | Size | Use |
 |---|---|---|
 | `model_output/best_model.h5` | ~418 KB | Keras weights (training) |
-| `model_output/head_gesture_f32.tflite` | 120 KB | TFLite float32 |
-| `model_output/head_gesture_int8.tflite` | **33.6 KB** | TFLite INT8 — **deploy on Nicla** |
+| `model_output/head_gesture_f32.tflite` | **120.1 KB** | TFLite float32 |
+| `model_output/head_gesture_int8.tflite` | **39.1 KB** | TFLite INT8 — **deploy on Nicla** |
 | `model_output/head_gesture_int8_model.h` | — | C byte array header for Arduino |
 | `model_output/scaler.pkl` | 4 KB | StandardScaler for inference |
 
@@ -323,7 +348,7 @@ Total Parameters: 30,663  |  INT8 Size: ~33.6 KB
 ```
 Float32 → INT8 conversion:   x_int8 = round(x / scale) + zero_point
 
-Size reduction:  120 KB → 33.6 KB  (3.6× smaller)
+Size reduction:  120.1 KB → 39.1 KB  (3.1× smaller)
 Speed gain:      2–4× faster (integer arithmetic on Cortex-M7)
 Accuracy drop:   < 2%
 ```
@@ -443,16 +468,37 @@ Outputs will be saved to `model_output/`.
 
 ---
 
-## 12. Team
+## 12. Demo
+
+<div align="center">
+
+[![Demo Video](https://img.shields.io/badge/▶_Watch_Full_Demo_Video-SharePoint-0078D4?style=for-the-badge&logo=microsoft)](https://indianinstituteofscience-my.sharepoint.com/:v:/g/personal/abhas_iisc_ac_in/IQCmHS_j7puyQ6OWcKqMe5GkAeruAGz5R6FupJL88lnMZLk?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=pOxfAL)
+
+<img src="doc/Figure/demo_image.png" alt="Live Demo" width="680"/>
+<br><em>Live gesture recognition — OLED displaying detected gesture in real-time</em>
+
+</div>
+
+---
+
+## 13. Team
 
 | Name | Role |
 |---|---|
-| **Abha Anisha** | Project Lead, Data Collection, ML Pipeline |
-| **Adarsh** | Data Collection |
-| **Parthib G** | Data Collection |
-| **Maitreyi** | Data Collection |
+| **Parthib Dey** | Hardware Integration, Data Collection Setup, Model Pipeline, Model Deployment |
+| **Abha Singh Sardar** | Data Collection, Data Preprocessing, Feature Engineering, Model Training, Model Evaluation |
+| **Maitreyi Tiwari** | Data Collection, Documentation |
+| **Trisha** | Data Collection, Documentation |
 
-> **Course:** Edge AI — Indian Institute of Science (IISc), Semester 2, 2026
+> **Course:** CP 330 — Edge AI &nbsp;|&nbsp; **Instructor:** Prof. Pandarasamy Arjunan &nbsp;|&nbsp; Indian Institute of Science (IISc), Bangalore, Semester 2, 2026
+
+---
+
+## 14. References
+
+[1] Gouwanda, D., & Senanayake, S. A. (2011). Identifying gait asymmetry using gyroscopes—A cross-correlation and Normalized Symmetry Index approach. *Journal of Biomechanics*, 44(5), 972–978.
+
+[2] Ortega-Anderez, D., Lotfi, A., Langensiepen, C., & Appiah, K. (2019). A multi-level refinement approach towards the classification of quotidian activities using accelerometer data. *Journal of Ambient Intelligence and Humanized Computing*, 10(11), 4319–4330.
 
 ---
 
