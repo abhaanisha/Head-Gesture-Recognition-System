@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+
+# Large model binaries (tracked selectively)
+model_output/*.pkl
+model_output/*.h5
+model_output/*.tflite
+model_output/*.h
+model_output/*.npy
+
+# Dataset (large CSV files — not tracked in git)
+dataset/
+
+# PDFs and Word docs
+doc/*.pdf
+doc/*.docx
+
+# Streamlit / App files (optional, add if needed)
+# app.py
+# streamlit.py
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
