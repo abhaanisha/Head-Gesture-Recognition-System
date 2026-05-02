@@ -265,7 +265,7 @@ The following table compares the raw research model (CNN) against the optimized 
 | **1D-CNN (Float32)** |  153.3 KB | 0.4933 ms | 96.45 % | Needs TFLite RAM |
 | **1D-CNN (INT8)** (QAT) |  17 KB | 0.1590 ms |84.10 % | Needs TFLite RAM |
 | **1D-CNN (INT8)** (PQT) |  16.6 KB | 0.1072 ms |85.24 % | Needs TFLite RAM |
-| **Decision Tree (Deployed)** | **KB** | **< 0.01 ms** | **100%** | **Static Flash** |
+| **Decision Tree (Deployed)** | **1.52 KB** | **< 0.01 ms** | **100%** | **Static Flash** |
 
 ## 6. Model Compression & Efficiency Metrics
 
