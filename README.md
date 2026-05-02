@@ -309,10 +309,18 @@ Head-Gesture-Recognition-System/
 │
 ├── README.md                          ← This file
 ├── report.md
-├── firmware/
+├── model_development.ipynb            ← Full ML pipeline notebook for the deployed model
+├── CNN_Code_Files/
+│   ├── CNN_Model_Development.ipynb        ← CNN development code[end-to-end-pipeline](also contains pruning, PQT and QAT)
+|   ├──CNN_master_deployment.py
+│   └── CNN_slave_deployment.py    
+├── Model_deployment_Final/
 │   ├── master.py                      ← MicroPython: Master Nicla Vision (Right)
 │   └── slave.py                       ← MicroPython: Slave Nicla Vision (Left)
-│
+|   └── streamlit_PC_Side.py
+|   └── Arduino_Uno_R4_wifi/
+|      └──Arduino_Uno_R4_wifi.ino
+|
 ├── data_collection/       ← Data collection script and the collected data
 │   └── master.py               
 |   └── slave.py
@@ -325,8 +333,7 @@ Head-Gesture-Recognition-System/
 │       ├── 5_Look_Up_*.csv
 │       ├── 6_Look_Down_*.csv
 │       └── 7_Idle_*.csv
-│
-├── model_development.ipynb            ← Full ML pipeline notebook for the deployed model
+|
 ├── feature_order.json                 ← Feature vector ordering for inference
 │
 ├── model_output/
