@@ -1,0 +1,73 @@
+================================================================================
+PROJECT SUBMISSION — CP 330: Edge AI
+Indian Institute of Science (IISc), Bangalore
+Semester 2, 2026
+Instructor: Prof. Pandarasamy Arjunan
+================================================================================
+
+1. PROJECT TITLE & DESCRIPTION
+--------------------------------------------------------------------------------
+Title: Head Gesture Recognition System — TinyML-Based Assistive Communication
+       for Elderly & Disabled Individuals
+
+Description:
+A real-time, cloud-free wearable gesture recognition system that translates
+head movements into meaningful feedback using two Arduino Nicla Vision boards
+mounted on a cap. The system fuses 12-axis IMU data from bilateral temples,
+extracts 113 statistical and cross-IMU features over a 20-sample sliding
+window, and runs an m2cgen-exported Decision Tree entirely on-device in
+MicroPython — with no cloud dependency. Recognised gestures are displayed on
+an OLED screen via an Arduino UNO R4 WiFi, announced via Windows TTS, and
+pushed as notifications to a caregiver's phone through the ntfy app.
+
+================================================================================
+
+2. TEAM MEMBERS
+--------------------------------------------------------------------------------
+
+Name            : Parthib Kumar Dey
+Serial No.      : 26787
+Affiliation     : Indian Institute of Science (IISc), Bangalore
+Email           : parthib@iisc.ac.in
+Contributions   : Hardware Integration, Data Collection Setup, Model Pipeline,
+                  Model Deployment, Inference Firmware (master.py & slave.py),
+                  Arduino UNO R4 WiFi Firmware (OLED & Buzzer) setup,
+                  Streamlit App Development, ntfy Push Notification Integration
+		  and Full Demo Recording.
+
+--------------------------------------------------------------------------------
+
+Name            : Abha Singh Sardar
+Serial No.      : 27086
+Affiliation     : Indian Institute of Science (IISc), Bangalore
+Email           : abhas@iisc.ac.in
+Contributions   : Data Collection, Multi-axis Feature Engineering and data preprocessing; 
+		  Model Training and Comparative Evaluation of Keras MLP, Random Forest, 
+		  and Decision Tree architectures (Final Deployed Model); 
+		  and Post-Training Quantization performance analysis.
+
+--------------------------------------------------------------------------------
+
+Name            : Maitreyi Tiwari
+Serial No.      : 26500
+Affiliation     : Indian Institute of Science (IISc), Bangalore
+Email           : maitreyit@iisc.ac.in
+Contributions   : Data Collection, Advanced Temporal Data Augmentation and CNN Fine-tuning; 
+		  Implementation of Quantization-Aware Training (QAT) and Pruning strategies;
+		 `ntfy` Mobile Alert System Debugging; Technical Documentation and Presentation Recording
+--------------------------------------------------------------------------------
+
+Name            : Tishha Agrawal
+Serial No.      : 26023
+Affiliation     : Indian Institute of Science (IISc), Bangalore
+Email           : tishhaa@iisc.ac.in
+Contributions   : Data Collection, Design and Development of 1D-CNN Temporal Architecture, 
+		  Edge Model Optimization (PTQ and Pruning), Streamlit WebApp Debugging, 
+		  Technical Documentation, and Visual Presentation Design for Project Video.
+================================================================================
+
+3. GITHUB PROJECT LINK
+--------------------------------------------------------------------------------
+https://github.com/abhaanisha/Head-Gesture-Recognition-System
+
+================================================================================
