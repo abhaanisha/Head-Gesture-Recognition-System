@@ -812,7 +812,7 @@ The development of a dual-sensor wearable on an Edge platform presented several 
 *   **Challenge:** Every participant wears the headband slightly differently, which changes the baseline "gravity vector" on the accelerometer. A model trained on one person's "Idle" position would fail on another person because their resting "zero point" was different.
 *   **Mitigation:** We utilized **StandardScaler (Z-score Normalization)** during pre-processing. By centering all 12 axes around a mean of zero and scaling by standard deviation, we made the model **"Gravity-Invariant."** This forced the neural network to focus on the *relative change* in motion rather than the absolute angle of the sensors, allowing the system to generalize across different users.
 ---
-## 12. References -  Parthib/Abha will add
+## 12. References
 
 [1] Gouwanda, D., & Senanayake, S. A. (2011). Identifying gait asymmetry using gyroscopes—A cross-correlation and Normalized Symmetry Index approach. *Journal of Biomechanics*, 44(5), 972–978.
 
