@@ -98,15 +98,15 @@ Many elderly and differently-abled individuals have severely limited hand mobili
 
 The system recognises 7 states (6 gestures + idle):
 
-| # | Gesture | OLED Message | Buzzer | Semantic |
-|---|---|---|---|---|
-| 1 | **Nod** (up-down) | `I AM OK` | 1 short beep (100ms) | Affirmation / Yes |
-| 2 | **Head Shake** (side-to-side) | `NO / HELP` | 2 short beeps | Negation / Help |
-| 3 | **Tilt Left** | `NEED WATER` | 1 long beep (500ms) | Hydration request |
-| 4 | **Tilt Right** | `NEED HELP` | 3 short beeps | General distress |
-| 5 | **Look Up** | `EMERGENCY` | Continuous beep | Life-safety alert |
-| 6 | **Look Down** | `CALL NURSE` | 3 fast beeps (50ms) | Medical assistance |
-| 7 | **Idle** | *(silent)* | Silent | No gesture / resting |
+| # | Gesture |
+|---|---|
+| 1 | **Nod** |
+| 2 | **Head Shake** |
+| 3 | **Tilt Left** |
+| 4 | **Tilt Right** |
+| 5 | **Look Up** |
+| 6 | **Look Down** |
+| 7 | **Idle** |
 
 ---
 
@@ -280,26 +280,7 @@ Feature dimensionality    :     150
 
 ---
 
-## 9. TinyML Deployment
 
-### Model Exports
-
-| File | Size | Use |
-|---|---|---|
-| `model_output/best_model.h5` | ~418 KB | Keras weights (training) |
-| `model_output/head_gesture_f32.tflite` | **120.1 KB** | TFLite float32 |
-| `model_output/head_gesture_int8.tflite` | **39.1 KB** | TFLite INT8 — **deploy on Nicla** |
-| `model_output/head_gesture_int8_model.h` | — | C byte array header for Arduino |
-| `model_output/scaler.pkl` | 4 KB | StandardScaler for inference |
-
-### INT8 Quantisation
-```
-Float32 → INT8 conversion:   x_int8 = round(x / scale) + zero_point
-
-Size reduction:  120.1 KB → 39.1 KB  (3.1× smaller)
-Speed gain:      2–4× faster (integer arithmetic on Cortex-M7)
-Accuracy drop:   < 2%
-```
 
 ### Real-Time Inference Flow (on Master board)
 ```
@@ -327,29 +308,16 @@ Every 20ms:
 Head-Gesture-Recognition-System/
 │
 ├── README.md                          ← This file
-│
+├── report.md
 ├── firmware/
 │   ├── master.py                      ← MicroPython: Master Nicla Vision (Right)
 │   └── slave.py                       ← MicroPython: Slave Nicla Vision (Left)
 │
-├── data_collection/
-│   └── Data_receive.py                ← PC-side UDP data collection script
-│
-├── model_development.ipynb            ← Full ML pipeline notebook
-├── feature_order.json                 ← Feature vector ordering for inference
-│
-├── model_output/
-│   ├── best_model.h5                  ← Trained Keras model
-│   ├── head_gesture_int8.tflite       ← Quantised TFLite model
-│   ├── head_gesture_int8_model.h      ← C header for Arduino embedding
-│   ├── scaler.pkl                     ← StandardScaler
-│   ├── cm_keras.png                   ← Confusion matrix
-│   ├── training_curves.png            ← Accuracy/loss curves
-│   ├── tsne_features.png              ← Feature space t-SNE
-│   └── feature_importance_rf.png      ← Feature importance
-│
-├── dataset/
-│   └── imu_data/                      ← Raw CSV recordings (7 gesture classes)
+├── data_collection/       ← Data collection script and the collected data
+│   └── master.py               
+|   └── slave.py
+|   └── imu_data/          ← Collected data
+│    └── imu_data/                      ← Raw CSV recordings (7 gesture classes)
 │       ├── 1_Nod_*.csv
 │       ├── 2_Head_Shake_*.csv
 │       ├── 3_Tilt_Left_*.csv
@@ -358,15 +326,19 @@ Head-Gesture-Recognition-System/
 │       ├── 6_Look_Down_*.csv
 │       └── 7_Idle_*.csv
 │
+├── model_development.ipynb            ← Full ML pipeline notebook for the deployed model
+├── feature_order.json                 ← Feature vector ordering for inference
+│
+├── model_output/
+|   ├── eda_overview.png               ← EDA visualisation
+│   ├── cm_*.png                       ← Confusion matrices
+│   ├── training_curves.png            ← Accuracy/loss curves
+|   ├── learning_curves.png            ← Accuracy/loss curves
+│   ├── tsne_features.png              ← Feature space t-SNE
+│   └── feature_importance_rf.png      ← Feature importance
+│
 └── doc/
-    ├── Figure/
-    │   ├── Head Sensor Placement Diagram.png
-    │   ├── System Flow Diagram.png
-    │   ├── Machine Leaning Pipeline Diagram.png
-    │   └── Wire Connection Diagram.png
-    ├── Dual-IMU_Feature_Engineering.png
-    ├── project_overview.md
-    └── viva_questions.md
+    ├── Figure/ ← Figures used in the report
 ```
 
 ---
@@ -416,16 +388,6 @@ Outputs will be saved to `model_output/`.
 
 ---
 
-## 12. Demo
-
-<div align="center">
-
-[![Demo Video](https://img.shields.io/badge/▶_Watch_Full_Demo_Video-SharePoint-0078D4?style=for-the-badge&logo=microsoft)](https://indianinstituteofscience-my.sharepoint.com/:v:/g/personal/abhas_iisc_ac_in/IQCmHS_j7puyQ6OWcKqMe5GkAeruAGz5R6FupJL88lnMZLk?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=pOxfAL)
-
-<img src="doc/Figure/demo_image.png" alt="Live Demo" width="680"/>
-<br><em>Live gesture recognition — OLED displaying detected gesture in real-time</em>
-
-</div>
 
 ---
 
