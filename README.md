@@ -157,7 +157,7 @@ The system recognises 7 states (6 gestures + idle):
 <br><em>Dual-IMU feature engineering: 148-dimensional feature vector from a 1-second window</em>
 </div>
 
-### Feature Engineering — 148 Features Total
+### Feature Engineering
 
 The feature pipeline operates on **1-second sliding windows** (50 samples @ 50 Hz) with **50% overlap**:
 
@@ -245,21 +245,28 @@ Feature dimensionality    :     150
 
 <br>
 
-<table>
-<tr>
-<td><img src="model_output/cm_keras.png" alt="Keras Confusion Matrix" width="380"/><br><em>Keras MLP confusion matrix</em></td>
-<td><img src="model_output/training_curves.png" alt="Training Curves" width="380"/><br><em>Training & validation accuracy/loss</em></td>
-</tr>
-<tr>
-<td><img src="model_output/feature_importance_rf.png" alt="Feature Importance" width="380"/><br><em>Top-20 features (Random Forest)</em></td>
-<td><img src="model_output/tsne_features.png" alt="t-SNE" width="380"/><br><em>t-SNE feature space visualisation</em></td>
-</tr>
-</table>
+The Decision Tree achieved **99.9%–100% test accuracy**, masterfully handling the 12-axis feature vector with a negligible memory footprint.
 
-<div align="center">
-<img src="model_output/tilt_comparison.png" alt="Tilt Comparison" width="650"/>
-<br><em>Tilt Left vs Tilt Right — how dual-IMU gyroscope signals differ between the two classes</em>
-</div>
+#### Classification Report — Decision Tree (Accuracy: 100.00%)
+
+```text
+Classification Report:
+                  precision    recall  f1-score   support
+
+         Nod       1.00      1.00      1.00       129
+  Head_Shake       1.00      1.00      1.00       154
+   Tilt_Left       1.00      1.00      1.00       169
+  Tilt_Right       1.00      1.00      1.00       162
+     Look_Up       1.00      1.00      1.00       163
+   Look_Down       1.00      1.00      1.00       177
+        Idle       1.00      1.00      1.00       179
+
+    accuracy                           1.00      1133
+   macro avg       1.00      1.00      1.00      1133
+weighted avg       1.00      1.00      1.00      1133
+```
+
+![Confusion Matrix — Decision Tree](doc/Figure/Decision_tree_cm.png)
 
 ---
 
