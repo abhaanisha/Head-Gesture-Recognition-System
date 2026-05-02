@@ -118,7 +118,59 @@ Recognised gestures are broadcast over Wi-Fi UDP to two destinations simultaneou
 | *ntfy push notifications* | Caregivers receive alerts on their phone even when away from the PC display — 15-second cooldown prevents notification spam |
 
 ---
-## 3. Hardware and Software Setup - Parthib will add
+## 3. Hardware and Software Setup
+### Physical Setup
+
+<table>
+<tr>
+<td align="center"><img src="doc/Figure/Setup_image_1.jpeg" alt="Setup Photo 1" width="360"/><br><em>Physical hardware setup — front view showing OLED and Nicla Vision on cap</em></td>
+<td align="center"><img src="doc/Figure/Setup_image_2.jpeg" alt="Setup Photo 2" width="360"/><br><em>Wearable cap with both Nicla Vision boards mounted at temples</em></td>
+</tr>
+</table>
+
+<br>
+
+<div align="center">
+<img src="doc/Figure/Wire Connection Diagram.png" alt="Wiring Diagram" width="600"/>
+<br><em>Complete wiring: I2C OLED and Buzzer connected to Arduino UNO R4 WiFi</em>
+</div>
+
+<br>
+
+### Bill of Materials
+
+| Component | Role | Interface | Qty |
+|---|---|---|---|
+| *Arduino Nicla Vision* | MCU (STM32H747) + Wi-Fi + IMU | — | 2 |
+| *LSM6DSRX IMU* | 3-axis Accel + 3-axis Gyro (built-in on Nicla) | SPI | 2 (built-in) |
+| *Arduino UNO R4 WiFi* | Output controller — OLED + Buzzer | Wi-Fi UDP | 1 |
+| *SSD1306 OLED (128×64)* | Visual gesture feedback | I2C (0x3C) | 1 |
+| *Active Buzzer* | Audio gesture alert | Digital pin 9 | 1 |
+| *Wearable Cap* | Temple mounting frame for Nicla boards | — | 1 |
+
+### Pin Connections — Arduino UNO R4 WiFi
+
+| Component | Signal | UNO R4 Pin |
+|---|---|---|
+| SSD1306 OLED | SDA | A4 |
+| SSD1306 OLED | SCL | A5 |
+| SSD1306 OLED | VCC | 3.3V |
+| SSD1306 OLED | GND | GND |
+| Active Buzzer | Signal | Digital 9 |
+| Active Buzzer | GND | GND |
+
+### Network Configuration
+
+All three devices connect to the same Wi-Fi network. Assign static IPs or note the DHCP-assigned addresses and update the firmware configs accordingly.
+
+| Device | Role | IP (example) | Listens on | Sends to |
+|---|---|---|---|---|
+| Slave Nicla Vision | IMU streamer | — | — | Master : 6000 |
+| Master Nicla Vision | Inference engine | 10.91.63.16 | port 6000 | PC : 5005, UNO : 5006 |
+| Arduino UNO R4 WiFi | Output controller | 10.91.63.59 | port 5006 | — |
+| PC (Streamlit) | Monitor + notifications | 10.91.63.79 | port 5005 | ntfy.sh |
+
+
 ---
 
 ## 4. Data Collection & Dataset Preparation
