@@ -133,15 +133,6 @@ Recognised gestures are broadcast over Wi-Fi UDP to two destinations simultaneou
 </tr>
 </table>
 
-<br>
-
-<div align="center">
-<img src="doc/Figure/Wire Connection Diagram.png" alt="Wiring Diagram" width="600"/>
-<br><em>Complete wiring: I2C OLED and Buzzer connected to Arduino UNO R4 WiFi</em>
-</div>
-
-<br>
-
 ### Bill of Materials
 
 | Component | Role | Interface | Qty |
