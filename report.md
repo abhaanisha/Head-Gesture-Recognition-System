@@ -61,7 +61,9 @@ Our solution utilizes a head-mounted wearable that translates head motion into a
 2.  **Pre-processing:** Raw signals are cleaned, scaled using Z-score normalization, and sliced into 1.6-second temporal windows.
 3.  **Edge Inference:** A localized model classifies the motion into one of seven activities. While 1D-CNNs were explored for research, a **Decision Tree Classifier** was chosen for deployment due to its superior efficiency-to-accuracy ratio.
 4.  **Integrated Output:** Upon detection, the system triggers local feedback (Buzzer/OLED) and transmits results via UDP to a Streamlit dashboard and mobile app.
+
 ---
+
 ### System Overview
 
 <div align="center">
@@ -101,13 +103,14 @@ UDP port 5006 (on change)     UDP port 5005 (continuous)
 └───────────────────────┘    │  ntfy push notifications │
 └──────────────────────────┘
 ```
-## How it works
+### How It Works
 
 The *Slave Nicla Vision* (left temple) reads its LSM6DSRX IMU at 50 Hz and streams the 6-axis data [ax, ay, az, gx, gy, gz] over Wi-Fi UDP (port 6000) to the Master. The *Master Nicla Vision* (right temple) simultaneously reads its own 6-axis IMU, combines both streams into a 12-axis sample, and fills a 20-sample sliding window. Every window, it extracts 113 statistical and cross-IMU features and runs an embedded *m2cgen Decision Tree* entirely on-device — no cloud, no external compute. A 5-sample majority vote smooths the output before dispatch.
 
 Recognised gestures are broadcast over Wi-Fi UDP to two destinations simultaneously: the *Arduino UNO R4 WiFi* (port 5006, on change only) which drives an I2C OLED display and a buzzer for immediate bedside feedback, and the *PC Streamlit app* (port 5005) which applies a second stage of majority-vote smoothing (buffer N=50, stability threshold 95%), speaks the gesture aloud via Windows TTS, and sends push notifications to a caregiver's phone through the *ntfy* app.
 
 ### Key Design Decisions
+
 
 | Decision | Rationale |
 |---|---|
@@ -120,7 +123,8 @@ Recognised gestures are broadcast over Wi-Fi UDP to two destinations simultaneou
 
 ---
 ## 3. Hardware and Software Setup
-## 3.1 Physical Setup
+
+### 3.1 Physical Setup
 
 <table>
 <tr>
@@ -172,7 +176,7 @@ All three devices connect to the same Wi-Fi network. Assign static IPs or note t
 | PC (Streamlit) | Monitor + notifications | 10.91.63.79 | port 5005 | ntfy.sh |
 
 
-## 3.2 Software Architecture
+### 3.2 Software Architecture
 
 ### 3.2.1 Data Collection Firmware
 
@@ -257,13 +261,14 @@ Every 20 ms:
 ---
 
 ## 4. Data Collection & Dataset Preparation
-*   **Data Source:** A custom dataset was hand-collected from multiple participants to ensure the model learned general motion patterns.
-*   **Sample Size:** We recorded approximately 20,000 samples per activity class, resulting in a comprehensive dataset of ~140,000 samples.
-*   **Class Distribution:** The data covers 7 activities: *Nod, Head Shake, Tilt Left, Tilt Right, Look Up, Look Down, and Idle.*
-*   **Preprocessing Steps:**
-    *   **Normalization:** Applied `StandardScaler` (fitted only on training data) to center Accelerometer and Gyroscope readings, making the model "Gravity-Invariant."
-    *   **Segmentation:** Implemented a Sliding Window of 80 samples (1.6s) with a 40-sample (50%) overlap to ensure full gesture capture.
-    *   **Labeling:** Used regex-based parsing to extract activity codes from filenames for supervised learning.
+
+A custom dataset was hand-collected from multiple participants to ensure the model learned general motion patterns rather than individual-specific noise. We recorded approximately **20,000 samples per activity class**, resulting in a comprehensive dataset of **~140,000 samples** covering 7 activities: *Nod, Head Shake, Tilt Left, Tilt Right, Look Up, Look Down,* and *Idle*.
+
+**Preprocessing Steps:**
+
+*   **Normalization:** Applied `StandardScaler` (fitted only on training data) to center accelerometer and gyroscope readings, making the model gravity-invariant.
+*   **Segmentation:** Implemented a sliding window of 80 samples (1.6 s) with a 40-sample (50%) overlap to ensure full gesture capture.
+*   **Labeling:** Used regex-based parsing to extract activity codes from filenames for supervised learning.
 
 ---
 
@@ -318,11 +323,9 @@ During **Tilt Left**: `cross_gx_mean_diff < 0` (left temple dominant).
 During **Tilt Right**: `cross_gx_mean_diff > 0` (right temple dominant).
 
 
-*   **Performance:** Achieved **99.9% - 100% test accuracy**, masterfully handling the 12-axis feature vector with a negligible memory footprint.
-The evaluation metrics observed for Decision Tree model are:
-### Decision Tree Accuracy: 100.00%
+The Decision Tree achieved **99.9%–100% test accuracy**, masterfully handling the 12-axis feature vector with a negligible memory footprint.
 
-#### Classification Report
+#### Classification Report — Decision Tree (Accuracy: 100.00%)
 
 ```text
 Classification Report:
@@ -339,11 +342,9 @@ Classification Report:
     accuracy                           1.00      1133
    macro avg       1.00      1.00      1.00      1133
 weighted avg       1.00      1.00      1.00      1133
-
 ```
 
-Decision tree achieved 100% accuracy
-![Optimization Strategy:](doc/Figure/Decision_tree_cm.png)
+![Confusion Matrix — Decision Tree](doc/Figure/Decision_tree_cm.png)
 
 ### 5.2 Research Model: 1D-Convolutional Neural Network (CNN)
 As an advanced research path, we developed a 1D-CNN to capture the temporal "shape" of gestures.
@@ -377,7 +378,7 @@ As an advanced research path, we developed a 1D-CNN to capture the temporal "sha
 ```
 
 
-## Data Shape Flow
+#### Data Shape Flow
 
 | Layer | Output Shape | Purpose |
 |-------|-------------|---------|
@@ -393,7 +394,7 @@ As an advanced research path, we developed a 1D-CNN to capture the temporal "sha
 | Dense (64) | (64) | Final decision logic |
 | Dense (7) | (7) | Softmax probabilities |
 
-## Why the Split?
+#### Why the Split?
 
 The split into two branches is the core innovation of this architecture.
 
@@ -422,7 +423,7 @@ By concatenating both branches, the Dense layer receives the best of both worlds
     I --> J["Output Classes:\n1. Nod\n2. Head Shake\n3. Tilt Left\n4. Tilt Right\n5. Look Up\n6. Look Down\n7. Idle"]
 
 ```
-## Data Shape Flow
+#### Data Shape Flow
 
 | Layer | Output Shape | Parameters | Purpose |
 |-------|-------------|------------|---------|
@@ -437,78 +438,76 @@ By concatenating both branches, the Dense layer receives the best of both worlds
 | Dense (7) | (7) | 231 | Softmax classification |
 | *Total* | | *9,703* | |
 
-## Key Design Decisions
+#### Key Design Decisions
 
-- *No MaxPooling:* Uses GlobalAveragePooling1D instead, which preserves the gravity baseline signal rather than only keeping peak values.
-- *No Flatten:* Avoids exploding the parameter count. Flatten would create a (76 x 64 = 4,864) vector feeding into Dense, massively increasing model size and overfitting risk.
-- *No BatchNormalization:* Removed to prevent stripping the DC offset (gravity vector) which is critical for distinguishing static postures.
+- *No MaxPooling:* Uses GlobalAveragePooling1D instead, preserving the gravity baseline signal rather than only keeping peak values.
+- *No Flatten:* Avoids exploding the parameter count. Flatten would produce a (76 × 64 = 4,864) vector feeding into Dense, massively increasing model size and overfitting risk.
+- *No BatchNormalization:* Removed to prevent stripping the DC offset (gravity vector), which is critical for distinguishing static postures.
 - *Small Filters (32/64):* Deliberately kept small to prevent memorization and to fit within Nicla Vision SRAM constraints.
-- *Kernel Size 3:* Scans 3 consecutive timesteps (60ms at 50Hz), capturing rapid micro-movements within gestures.
+- *Kernel Size 3:* Scans 3 consecutive timesteps (60 ms at 50 Hz), capturing rapid micro-movements within gestures.
 
-### Training Setup
-*   **Data Split:** Implemented a strict **File-Based Split** (80% Train, 20% Validation) to ensure that windows from the same recording never appeared in both sets, preventing "Data Leakage."
+*   **Data Split:** Implemented a strict **File-Based Split** (80% Train / 20% Validation) to ensure that windows from the same recording never appeared in both sets, preventing data leakage.
 *   **Hyperparameters:** Optimizer: Adam (lr=0.001); Loss: Categorical Crossentropy; Batch Size: 32.
 *   **Callbacks:** Used `EarlyStopping` to halt training when validation loss stopped improving, restoring the best weights.
 
 ### Evaluation Metrics
-The model was evaluated on a 100% "Blind" Test Set of files never seen during training.
-*   **Validation Accuracy:** ~85% - 90% (Realistic, non-overfit performance).
-*   **Confusion Matrix:** Analyzed to ensure distinct gestures like "Tilt Left" were not confused with "Nods."
-*   **Inference Speed:** Profiling confirmed an inference time of ~0.1ms per window, fitting comfortably within the hardware's real-time requirements. (WE NEED TO CHECK THIS)
----
- ## 6. Model Compression & Efficiency Metrics
 
-To ensure the system remains responsive while handling dual-IMU streams and WiFi communication, we evaluated the efficiency of both our primary and research models. Our goal was to find the "Pareto Optimal" point—the best balance between high accuracy and low resource consumption.
+The model was evaluated on a 100% "blind" test set of files never seen during training.
 
-### Techniques Used
-*   **C++ Transpilation (Decision Tree):** For the deployed model, we converted the trained Decision Tree into a series of static C++ `if-else` branches using mc2gen. This eliminates the need for a heavy runtime engine (like TFLite), making it the most compressed form of logic possible.
-*   **Post-Training Quantization (1D-CNN):** We applied **INT8 Quantization** to the CNN. This converted 32-bit floating-point weights into 8-bit integers, shrinking the model math to run on the microcontroller's integer hardware.
-*   **Global Average Pooling (GAP):** In the CNN architecture, we used GAP to replace traditional Flattening layers. This reduced total parameters by ~90% before deployment, significantly lowering the RAM requirement.
+*   **Validation Accuracy:** ~85%–90% (realistic, non-overfit performance).
+*   **Confusion Matrix:** Analyzed to confirm that distinct gestures like "Tilt Left" were not confused with "Nods."
+*   **Inference Speed:** Profi*   **Architectural Selection:** The heavy baseline CNN was replaced with a more serialized, filter-efficient design to minimize static RAM footprint.
+*   **Global Average Pooling (GAP):** GAP replaced traditional Flatten layers, reducing total parameters by ~90% before deployment.
 
 ### Comparative Efficiency Metrics
-The following table compares the raw research model (CNN) against the optimized deployment model (Decision Tree):
 
 | Model Approach | Model Size | Inference Latency | Accuracy | Memory Type |
 | :--- | :--- | :--- | :--- | :--- |
-| **1D-CNN (Float32)** |  153.3 KB | 0.4933 ms | 96.45 % | Needs TFLite RAM |
-| **1D-CNN (INT8)** (QAT) |  17 KB | 0.1590 ms |84.10 % | Needs TFLite RAM |
-| **1D-CNN (INT8)** (PQT) |  16.6 KB | 0.1072 ms |85.24 % | Needs TFLite RAM |
+| **1D-CNN (Float32)** | 153.3 KB | 0.4933 ms | 96.45% | Needs TFLite RAM |
+| **1D-CNN (INT8, QAT)** | 17 KB | 0.1590 ms | 84.10% | Needs TFLite RAM |
+| **1D-CNN (INT8, PTQ)** | 16.6 KB | 0.1072 ms | 85.24% | Needs TFLite RAM |
 | **Decision Tree (Deployed)** | **1.52 KB** | **< 0.01 ms** | **100%** | **Static Flash** |
 
-## 6. Model Compression & Efficiency Metrics
-
-A critical phase of this project involved a comparative study between a high-performance "Heavy" CNN and an optimized "Edge-Ready" version. This allowed us to quantify the exact trade-offs required to fit deep learning intelligence onto the Arduino Nicla Vision hardware.
-
-### Optimization Techniques
-*   **Post-Training Quantization (PTQ):** We utilized 8-bit integer quantization to shrink the model size and accelerate inference on the microcontroller’s hardware.
-*   **Quantization Aware Training (QAT):** We simulated the effects of 8-bit precision loss during the training phase to improve the robustness of the optimized model.
-*   **Architectural Selection:** We moved from a heavy baseline architecture to a more serialized, filter-efficient design to minimize the static RAM footprint.
-
-### Efficiency Comparison (CNN Research Path)
-The table below tracks the metrics captured during our transition from the high-precision baseline to the deployment-ready quantized version:
+### CNN Optimization Track
 
 | Metric | Heavy CNN Baseline | Optimized Quantized CNN | Improvement |
 | :--- | :--- | :--- | :--- |
-| **Model Size (KB)** | 2329.94 KB | **153 KB** | **~12x Smaller** |
-| **Inference Time** | 0.2640 ms | **0.1072 ms** | **~2.5x Faster** |
-| **Test Accuracy** | 95.66% | **85.34%** | -10.32% |
+| **Model Size** | 2329.94 KB | **153 KB** | **~12× Smaller** |
+| **Inference Time** | 0.2640 ms | **0.1072 ms** | **~2.5× Faster** |
+| **Test Accuracy** | 95.66% | **85.34%** | −10.32% |
+
+### Analysis and Final Deployment Strategy*Post-Training Quantization (PTQ):** We utilized 8-bit integer quantization to shrink the model size and accelerate inference on the microcontroller’s hardware.
+*   **Quantization Aware Training (QAT):** We simulated the effects of 8-bit precision loss during the training phase to improve the robustness of the optimized model.
+*   **Architectural Selection:** We moved from a heavy baseline architecture to a more serialized, filter-efficient design to minimize the static RAM footprint.
+
+### Efficiency Comparison (CNN Optimization Path)
+
+The table below tracks metrics captured during the transition from the high-precision baseline to the deployment-ready quantized version:
+
+| Metric | Heavy CNN Baseline | Optimized Quantized CNN | Improvement |
+| :--- | :--- | :--- | :--- |
+| **Model Size** | 2329.94 KB | **153 KB** | **~12× Smaller** |
+| **Inference Time** | 0.2640 ms | **0.1072 ms** | **~2.5× Faster** |
+| **Test Accuracy** | 95.66% | **85.34%** | −10.32% |
 
 ### Analysis and Final Deployment Strategy
-Our initial "Heavy" CNN achieved an impressive accuracy of **95.66%**, but its **2.3 MB** size exceeded the 2 MB total Flash limit of the Nicla Vision (especially when considering the space required for OLED and WiFi drivers). While our optimization efforts successfully reduced the model size by over **11x**, with a good accuracy of 94% there were a lot of challenges encountered to deploy it on the Nicla. Some of which are:
-* Memory Fragmentation crash: The Nicla crashed completely when trying to load the .tflite file. This happened because the Nicla has less than 500 KB of usable RAM. If we connect to the Wi-fi first, there is a scatter of small memory blocks all over that heap of memory and thus when a large model like CNN which is of around 200 KB tries to load, it cannot find a contagious block of RAM. To overcome this we had to restructure the code to load the model first and then connect to the Wi-fi
-* Interpreter Compatibility Crash: By default, TensorFlow applies Per-Channel quantization to Dense layers. OpenMV's lightweight TFLite interpreter does not support this operation. The fix was to force compiler to use older simple math on colab
-* WiFi Dropout: Nicla uses a single main processor to do both the CNN math and manage the WiFi connection. Thus while deploying a model like CNN it has do the inference mathematics and also Receive the packet sent. This Created a network bottleneck in the pipeline.
+
+Our initial "Heavy" CNN achieved an impressive accuracy of **95.66%**, but its **2.3 MB** size exceeded the 2 MB total Flash limit of the Nicla Vision when accounting for the space required by OLED and Wi-Fi drivers. Optimization efforts successfully reduced the model size by over **11×**, but deploying even the compressed version on the Nicla encountered three concrete hardware-level obstacles:
+
+*   **Memory Fragmentation Crash:** The Nicla has less than 500 KB of usable RAM. When Wi-Fi is connected first, small memory blocks are scattered across the heap and a ~200 KB model cannot find a contiguous block. We mitigated this by restructuring the code to load the model *before* connecting to Wi-Fi.
+*   **Interpreter Compatibility Crash:** TensorFlow applies per-channel quantization to Dense layers by default. OpenMV's lightweight TFLite interpreter does not support this operation. The fix was to force the compiler to use per-tensor quantization on Colab.
+*   **Wi-Fi Dropout:** The Nicla uses a single processor for both CNN inference and Wi-Fi management. Running a CNN while simultaneously receiving UDP packets created a network bottleneck, causing packet drops.
 
 To overcome the problems caused by large model we trained a smaller model, as stated earlier, but we observed that due to our limited custom dataset, the CNN lacked enough diverse samples to maintain high precision after the significant data loss caused by 8-bit quantization. Consequently, we made the strategic decision to back off from deploying the CNN in the final prototype. Instead, we prioritized the **Decision Tree model**, as it maintained **100% accuracy** with an even smaller footprint, ensuring the most stable real-time behavior for the assistive device.
 
 ### Performance Visualizations
 The following figures provide a visual breakdown of the trade-offs in size, speed, and accuracy across our various experimental architectures.
 
-![Model Metrics:](doc/Figure/CNN_Base.png)
-*Figure 3: Initial Architecture, Comparison of Model Size, Accuracy, and Latency between the Heavy Baseline and Quantized TFLite versions.*
+![Initial CNN Architecture — Model Size, Accuracy, and Latency Comparison](doc/Figure/CNN_Base.png)
+*Figure 3: Comparison of model size, accuracy, and latency between the heavy baseline and quantized TFLite versions.*
 
-![Optimization Strategy:](doc/Figure/CNN_optimized.png)
-*Figure 4: Optimized Architecture and Performance impact of Post-Training Quantization (PTQ) and Quantization Aware Training (QAT) on model size and inference speed.*
+![Optimized CNN — PTQ vs QAT Performance](doc/Figure/CNN_optimized.png)
+*Figure 4: Performance impact of Post-Training Quantization (PTQ) and Quantization-Aware Training (QAT) on model size and inference speed.*
 
 ### Resource Utilization (On-Device Profiling)
 *   **Memory (RAM):** 
@@ -753,12 +752,10 @@ req = urllib.request.Request(
 ## 9. Conclusions & Limitations
 
 ### Conclusions
-The project successfully demonstrates the feasibility of a high-precision, head-mounted Human Activity Recognition (HAR) system using Edge AI. By leveraging the **dual-IMU Master-Slave architecture**, we achieved 12-axis spatial redundancy, which proved critical in distinguishing between intentional head gestures and random motion noise. 
 
-Key outcomes include:
-*   **Edge Autonomy:** The system performs 100% of its inference on-device, ensuring zero cloud dependency, low latency (<250ms feedback loop), and maximum user privacy.
-*   **Model Optimization:** Our comparative study proved that while 1D-CNNs offer superior temporal pattern recognition, a **Decision Tree Classifier** provided the most efficient balance of 100% accuracy and near-zero CPU/Memory utilization for the target hardware.
-*   **Integrated Ecosystem:** Beyond the model, we developed a full assistive environment, integrating real-time local feedback (OLED/Buzzer) with remote caregiver monitoring via Streamlit and mobile notifications.
+This project successfully demonstrates the feasibility of a high-precision, head-mounted Human Activity Recognition (HAR) system using Edge AI. By leveraging the **dual-IMU Master-Slave architecture**, we achieved 12-axis spatial redundancy — a design choice that proved critical in distinguishing intentional head gestures from random motion noise.
+
+The system performs 100% of its inference entirely on-device, ensuring zero cloud dependency, a feedback latency under 250 ms, and strong user privacy. Our comparative study showed that while 1D-CNNs offer superior temporal pattern recognition, the **Decision Tree Classifier** provided the best balance of 100% accuracy and near-zero CPU/memory utilization for the target hardware. Beyond the model itself, the project delivers a full assistive ecosystem integrating real-time local feedback (OLED and buzzer) with remote caregiver monitoring via a Streamlit dashboard and mobile push notifications.
 
 ### Limitations
 Despite the successful prototype, several technical and practical limitations were identified:
@@ -814,9 +811,11 @@ The development of a dual-sensor wearable on an Edge platform presented several 
 ---
 ## 12. References
 
-[1] Gouwanda, D., & Senanayake, S. A. (2011). Identifying gait asymmetry using gyroscopes—A cross-correlation and Normalized Symmetry Index approach. *Journal of Biomechanics*, 44(5), 972–978.
+[1] Gouwanda, D., & Senanayake, S. A. (2011). Identifying gait asymmetry using gyroscopes — A cross-correlation and Normalized Symmetry Index approach. *Journal of Biomechanics*, 44(5), 972–978.
 
 [2] Ortega-Anderez, D., Lotfi, A., Langensiepen, C., & Appiah, K. (2019). A multi-level refinement approach towards the classification of quotidian activities using accelerometer data. *Journal of Ambient Intelligence and Humanized Computing*, 10(11), 4319–4330.
+
+> *Note: AI tools (LLMs) were used for debugging assistance during development.*
 
 ---
 
