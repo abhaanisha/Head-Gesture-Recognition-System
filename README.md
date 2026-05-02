@@ -112,23 +112,22 @@ The system recognises 7 states (6 gestures + idle):
 
 ## 4. Software Architecture
 
-### 4.1 Firmware — `slave.py` (Left Nicla Vision)
-- Connects to Wi-Fi network
-- Reads LSM6DSRX via SPI at **50 Hz** (20 ms period)
-- Packs `[ax2, ay2, az2, gx2, gy2, gz2]` into UDP datagram
-- Sends to Master on **port 6000**
+### 4.1 Data Collection Pipeline
+- **Slave Nicla (`slave_datacollection.py`)**: Streams 6-axis IMU data to the Master via UDP (port 6000) at 50 Hz.
+- **Master Nicla (`master_datacollection.py`)**: Merges its own 6-axis IMU data with the Slave's data and streams a combined 13-value packet to the PC via UDP (port 5005).
+- **PC (`Data_receive.py`)**: Records the UDP stream and saves it into timestamped CSV files for model training.
 
-### 4.2 Firmware — `master.py` (Right Nicla Vision)
-- Reads its own IMU at 50 Hz: `[ax1, ay1, az1, gx1, gy1, gz1]`
-- Receives Slave data from UDP port 6000 (non-blocking; reuses last value if packet missed)
-- **Data Collection mode:** Streams 13-value CSV rows to PC on port 5005
-- **Inference mode:** Fills sliding window buffer → runs TinyML → drives OLED + Buzzer
+### 4.2 Inference Pipeline
+- **Slave Nicla (`slave.py`)**: Connects to Wi-Fi and continuously streams 6-axis IMU data to the Master via UDP at 50 Hz.
+- **Master Nicla (`master.py`)**:
+  - Maintains a 20-sample sliding window to extract 113 features (stats & cross-IMU).
+  - Runs a native Python `m2cgen` Decision Tree for real-time 7-class gesture recognition.
+  - Applies a 5-sample majority vote smoothing to filter out noise.
+  - Broadcasts recognised gestures to the PC (port 5005) and Arduino UNO R4 (port 5006) via UDP.
 
-### 4.3 Data Collection — `Data_receive.py` (PC)
-- Listens on UDP port 5005
-- Prompts for activity label and records for configurable duration
-- Saves timestamped CSV: `<class>_<CollectorName>_<YYYYMMDD_HHMMSS>.csv`
-- **CSV Schema:** `timestamp, ax1, ay1, az1, gx1, gy1, gz1, ax2, ay2, az2, gx2, gy2, gz2, activity`
+### 4.3 Output & Monitoring
+- **Arduino UNO R4 WiFi (`arduino_uno.ino`)**: Listens on port 5006. Updates an I2C OLED display and triggers an active buzzer only when the gesture changes.
+- **PC Monitor (`streamlit_app.py`)**: Listens on port 5005. Applies a stricter 50-sample (95% threshold) majority vote smoothing. It triggers voice feedback (Windows TTS) and sends push notifications to caregivers via `ntfy.sh` with a 15-second cooldown.
 
 ---
 
