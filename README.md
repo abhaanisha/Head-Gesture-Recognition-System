@@ -481,14 +481,6 @@ Outputs will be saved to `model_output/`.
 
 ---
 
-## 13. Team
-
-| Name | Role |
-|---|---|
-| **Parthib Dey** | Hardware Integration, Data Collection Setup, Model Pipeline, Model Deployment |
-| **Abha Singh Sardar** | Data Collection, Data Preprocessing, Feature Engineering, Model Training, Model Evaluation |
-| **Maitreyi Tiwari** | Data Collection, Documentation |
-| **Tishha Agarwal** | Data Collection, Documentation |
 
 > **Course:** CP 330 — Edge AI &nbsp;|&nbsp; **Instructor:** Prof. Pandarasamy Arjunan &nbsp;|&nbsp; Indian Institute of Science (IISc), Bangalore, Semester 2, 2026
 
