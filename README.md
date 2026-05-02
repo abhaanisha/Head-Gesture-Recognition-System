@@ -135,27 +135,13 @@ The system recognises 7 states (6 gestures + idle):
 ## 6. Dataset
 
 ### Collection Summary
-
-| Gesture | Files | Collectors | ~Total Rows |
-|---|---|---|---|
-| Nod | 3 | Abha, Adarsh, Parthib | 21,000+ |
-| Head Shake | 4 | Abha, Adarsh, Parthib, Maitreyi | 23,000+ |
-| Tilt Left | 4 | Abha, Adarsh, Parthib, Maitreyi | 25,000+ |
-| Tilt Right | 4 | Abha, Adarsh, Parthib, Maitreyi | 25,000+ |
-| Look Up | 4 | Abha, Adarsh, Parthib, Maitreyi | 24,000+ |
-| Look Down | 4 | Abha, Adarsh, Parthib, Maitreyi | 26,000+ |
-| Idle | 4 | Abha, Adarsh, Parthib, Maitreyi | 24,000+ |
-
+- **Total Samples:** more than 20k samples were recorded for each class which brings us to a total of around 1,40,000 samples overall
 - **Sampling Rate:** 50 Hz (20 ms period)
 - **Session Duration:** ~250 seconds per recording
-- **Multi-subject diversity:** 4 collectors with different gesture amplitudes and head sizes
+- **Multi-subject diversity:** multiple collectors with different gesture amplitudes and head sizes
 - `test_*.csv` files are calibration recordings — excluded from training
 
-### File Naming Convention
-```
-<class_index>_<GestureName>_<CollectorName>_<YYYYMMDD>_<HHMMSS>.csv
 
-Example: 1_Nod_Abha_20260410_163845.csv
 ```
 
 ---
