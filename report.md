@@ -119,7 +119,7 @@ Recognised gestures are broadcast over Wi-Fi UDP to two destinations simultaneou
 
 ---
 ## 3. Hardware and Software Setup
-### Physical Setup
+## 3.1 Physical Setup
 
 <table>
 <tr>
@@ -169,6 +169,88 @@ All three devices connect to the same Wi-Fi network. Assign static IPs or note t
 | Master Nicla Vision | Inference engine | 10.91.63.16 | port 6000 | PC : 5005, UNO : 5006 |
 | Arduino UNO R4 WiFi | Output controller | 10.91.63.59 | port 5006 | — |
 | PC (Streamlit) | Monitor + notifications | 10.91.63.79 | port 5005 | ntfy.sh |
+
+
+## 3.2 Software Architecture
+
+### 3.2.1 Data Collection Firmware
+
+#### slave_datacollection.py — Left Nicla Vision
+- Connects to Wi-Fi and reads LSM6DSRX at *50 Hz* (20 ms period)
+- Sends *6 raw floats* [ax2, ay2, az2, gx2, gy2, gz2] as a comma-separated UDP datagram to Master on *port 6000*
+- No timestamp in packet — keeps payload minimal for low-latency streaming
+
+#### master_datacollection.py — Right Nicla Vision
+- Reads its own IMU at *50 Hz*: [ax1, ay1, az1, gx1, gy1, gz1]
+- Receives Slave 6-axis data from UDP *port 6000* (non-blocking — holds last valid packet if one is missed, initialised to zeros)
+- Combines both into a *13-value packet*:
+  [timestamp, ax1, ay1, az1, gx1, gy1, gz1, ax2, ay2, az2, gx2, gy2, gz2]
+- Streams packet to PC on UDP *port 5005* at *50 Hz*
+- Prints every 10 loops (~5 Hz) for debug monitoring
+
+#### Data_receive.py — PC Side
+- Binds to UDP *port 5005, prompts for an **activity label, then starts a **5-second countdown*
+- Records for *250 seconds* — skips any packet where len(values) != 13
+- Saves to a timestamped CSV in imu_data/:
+
+
+<activity>_<YYYYMMDD_HHMMSS>.csv
+
+
+*CSV schema:*
+
+timestamp, ax1, ay1, az1, gx1, gy1, gz1, ax2, ay2, az2, gx2, gy2, gz2, activity
+
+
+- Prints rows/sec every second for throughput monitoring
+- Handles KeyboardInterrupt gracefully without data loss
+
+### 3.2.2 Inference Firmware — master.py (Right Nicla Vision)
+
+Runs the full recognition pipeline on-device at 50 Hz.
+
+Every 20 ms:
+  1. Read Master IMU  → [ax1, ay1, az1, gx1, gy1, gz1]
+  2. Receive Slave UDP (port 6000) → [ax2, ay2, az2, gx2, gy2, gz2]
+  3. Append 12-value sample to sliding window buffer (20 samples)
+  4. When window full:
+       a. Extract 113 features (9 stats × 12 channels + 5 cross-IMU)
+       b. Run m2cgen Decision Tree score(features) → class probabilities
+       c. argmax → predicted class (1–7)
+       d. Apply 5-sample majority vote smoothing
+       e. Send "cls,gesture_name" → PC on UDP port 5005 (every cycle)
+       f. Send "cls,gesture_name" → UNO R4 on UDP port 5006 (on change only)
+  5. Slide window by 1 sample, repeat
+
+
+- Green LED = slave data received successfully
+- Red LED = slave packet missed (last valid value reused)
+
+
+### 3.2.3 Inference Firmware — slave.py (Left Nicla Vision)
+- Connects to Wi-Fi and reads LSM6DSRX at *50 Hz*
+- Sends [timestamp, ax2, ay2, az2, gx2, gy2, gz2] to Master on UDP *port 6000*
+- Green LED = Wi-Fi connected, Red LED = transmitting
+
+### 3.2.4 Output Firmware — arduino_uno.ino (Arduino UNO R4 WiFi)
+- Connects to Wi-Fi and listens on UDP *port 5006*
+- Parses incoming "cls,gesture_name" string
+- Acts *only on gesture change*:
+  - *Idle* → showIdle() — displays Waiting for Gesture... on OLED, silent
+  - *Any gesture* → showGesture(cls, name) — displays class number and name on OLED, triggers buzzOnce() (150 ms beep on Digital pin 9)
+- OLED over I2C (SDA → A4, SCL → A5, address 0x3C)
+- Single buzz on startup confirms Wi-Fi and UDP ready
+
+### 3.2.5 PC Monitor — streamlit_app.py
+- Listens on UDP *port 5005* in a background thread
+- Fills a *rolling buffer of 50 raw predictions*
+- Applies *majority vote* with *95% stability threshold* — gesture only updates when one class holds ≥95% of the last 50 samples
+- On confirmed gesture change (non-idle):
+  - Speaks gesture name via *Windows TTS* (PowerShell System.Speech)
+  - Sends *ntfy push notification* to topic Head_Gesture_Recognition via https://ntfy.sh with a *15-second per-gesture cooldown*
+- Writes state to gesture_data.json — Streamlit UI polls every *400 ms* and renders:
+  - Large colour-coded gesture card with emoji and class number
+  - Recent activity history (last 10 gestures with timestamps)
 
 
 ---
