@@ -125,13 +125,35 @@ We performed a comparative study between traditional Machine Learning and Deep L
 The Decision Tree was selected as the primary deployment target. It provides a non-linear classification path that is extremely lightweight, consisting of a series of simple `if-else` logical branches that run nearly instantaneously on a microcontroller.
 *   **Architecture:**: .
 *   **Performance:** Achieved **99.9% - 100% test accuracy**, masterfully handling the 12-axis feature vector with a negligible memory footprint.
+The evaluation metrics observed for Decision Tree model are:
+### Decision Tree Accuracy: 100.00%
+
+#### Classification Report
+
+```text
+Classification Report:
+                  precision    recall  f1-score   support
+
+         Nod       1.00      1.00      1.00       129
+  Head_Shake       1.00      1.00      1.00       154
+   Tilt_Left       1.00      1.00      1.00       169
+  Tilt_Right       1.00      1.00      1.00       162
+     Look_Up       1.00      1.00      1.00       163
+   Look_Down       1.00      1.00      1.00       177
+        Idle       1.00      1.00      1.00       179
+
+    accuracy                           1.00      1133
+   macro avg       1.00      1.00      1.00      1133
+weighted avg       1.00      1.00      1.00      1133
+
+```
 
 ### 5.2 Research Model: 1D-Convolutional Neural Network (CNN)
 As an advanced research path, we developed a 1D-CNN to capture the temporal "shape" of gestures.
 ### 5.2.1 **Initial Architecture:**  Split-Path CNN Architecture for IMU Gesture Recognition
 
 #### Architectural Flowchart
-
+```text
     A["Input\n(80 timesteps x 12 channels)\n6 Master IMU + 6 Slave IMU"] --> B["GaussianNoise (0.1)\nCorrupts data to prevent memorization"]
     
     B --> C["Conv1D Block 1\n64 filters, kernel=5, ReLU\nL2=0.005"]
@@ -155,13 +177,7 @@ As an advanced research path, we developed a 1D-CNN to capture the temporal "sha
     O --> P["Dense (7, Softmax)\nFinal Classification"]
     
     P --> Q["Output Classes:\n1. Nod\n2. Head Shake\n3. Tilt Left\n4. Tilt Right\n5. Look Up\n6. Look Down\n7. Idle"]
-
-    style A fill:#4285F4,color:#fff
-    style K fill:#34A853,color:#fff
-    style L fill:#EA4335,color:#fff
-    style M fill:#FBBC05,color:#000
-    style P fill:#4285F4,color:#fff
-    style Q fill:#202124,color:#fff
+```
 
 
 ## Data Shape Flow
@@ -192,7 +208,7 @@ By concatenating both branches, the Dense layer receives the best of both worlds
 ### 5.2.2 **Optimized Architecture:** Sequential CNN Architecture for IMU Gesture Recognition
 
 #### Architectural Flowchart
-
+```text
     A["Input\n(80 timesteps x 12 channels)\n6 Master IMU + 6 Slave IMU"] --> B["GaussianNoise (0.1)\nAdds random noise to prevent memorization"]
     
     B --> C["Conv1D Block 1\n32 filters, kernel=3, ReLU\nScans 3-tick (60ms) patterns"]
@@ -208,12 +224,7 @@ By concatenating both branches, the Dense layer receives the best of both worlds
     
     I --> J["Output Classes:\n1. Nod\n2. Head Shake\n3. Tilt Left\n4. Tilt Right\n5. Look Up\n6. Look Down\n7. Idle"]
 
-    style A fill:#4285F4,color:#fff
-    style G fill:#34A853,color:#fff
-    style I fill:#4285F4,color:#fff
-    style J fill:#202124,color:#fff
-
-
+```
 ## Data Shape Flow
 
 | Layer | Output Shape | Parameters | Purpose |
