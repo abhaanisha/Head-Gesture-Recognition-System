@@ -74,22 +74,23 @@ Many elderly and differently-abled individuals have severely limited hand mobili
 
 | Component | Role | Interface | Qty |
 |---|---|---|---|
-| **Arduino Nicla Vision** | MCU (STM32H747) + Wi-Fi + IMU | — | 2 |
-| **LSM6DSRX IMU** | 3-axis Accel + 3-axis Gyro | SPI | 2 (built-in) |
-| **SSD1306 OLED (128×64)** | Visual gesture feedback | I2C | 1 |
-| **Active Buzzer** | Audio gesture alert | Digital D2 | 1 |
-| **Headband** | Temple mounting frame | — | 1 |
+| *Arduino Nicla Vision* | MCU (STM32H747) + Wi-Fi + IMU | — | 2 |
+| *LSM6DSRX IMU* | 3-axis Accel + 3-axis Gyro (built-in on Nicla) | SPI | 2 (built-in) |
+| *Arduino UNO R4 WiFi* | Output controller — OLED + Buzzer | Wi-Fi UDP | 1 |
+| *SSD1306 OLED (128×64)* | Visual gesture feedback | I2C (0x3C) | 1 |
+| *Active Buzzer* | Audio gesture alert | Digital pin 9 | 1 |
+| *Wearable Cap* | Temple mounting frame for Nicla boards | — | 1 |
 
-### Pin Connections
+### Pin Connections — Arduino UNO R4 WiFi
 
-| Connection | Wire | Pins |
+| Component | Signal | UNO R4 Pin |
 |---|---|---|
-| Slave TX → Master RX | Blue (UART) | TX / RX |
-| Ground | Grey | GND — GND |
-| OLED SDA | Purple (I2C) | SDA |
-| OLED SCL | Orange (I2C) | SCL |
-| Buzzer | Red-Orange | D2 — VCC |
-| Power | — | 3.3V |
+| SSD1306 OLED | SDA | A4 |
+| SSD1306 OLED | SCL | A5 |
+| SSD1306 OLED | VCC | 3.3V |
+| SSD1306 OLED | GND | GND |
+| Active Buzzer | Signal | Digital 9 |
+| Active Buzzer | GND | GND |
 
 ---
 
@@ -97,15 +98,15 @@ Many elderly and differently-abled individuals have severely limited hand mobili
 
 The system recognises 7 states (6 gestures + idle):
 
-| # | Gesture |
-|---|---|
-| 1 | **Nod** |
-| 2 | **Head Shake** |
-| 3 | **Tilt Left** |
-| 4 | **Tilt Right** |
-| 5 | **Look Up** |
-| 6 | **Look Down** |
-| 7 | **Idle** |
+| # | Gesture | OLED Display | Buzzer | Description |
+|---|---|---|---|---|
+| 1 | *Nod* | Class: 1 · Nod | 1 beep (150 ms) | Affirmation / Yes |
+| 2 | *Head Shake* | Class: 2 · Head_Shake | 1 beep (150 ms) | Negation / No |
+| 3 | *Tilt Left* | Class: 3 · Tilt_Left | 1 beep (150 ms) | Left tilt detected |
+| 4 | *Tilt Right* | Class: 4 · Tilt_Right | 1 beep (150 ms) | Right tilt detected |
+| 5 | *Look Up* | Class: 5 · Look_Up | 1 beep (150 ms) | Upward head motion |
+| 6 | *Look Down* | Class: 6 · Look_Down | 1 beep (150 ms) | Downward head motion |
+| 7 | *Idle* | Waiting for Gesture... | Silent | No gesture / resting |
 
 ---
 
