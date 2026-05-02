@@ -811,7 +811,7 @@ The development of a dual-sensor wearable on an Edge platform presented several 
 
 | Name | Key Contributions & Responsibilities |
 |:---|:---|
-| **Parthib Dey** | Hardware Integration, Data Collection Setup, Model Pipeline, Model Deployment, Inference Firmware (master.py & slave.py), Arduino UNO R4 WiFi Firmware (OLED & Buzzer) setup, Streamlit App Development, ntfy Push Notification Integration and Full Demo Recording. |
+| **Parthib Kumar Dey** | Hardware Integration, Data Collection Setup, Model Pipeline, Model Deployment, Inference Firmware (master.py & slave.py), Arduino UNO R4 WiFi Firmware (OLED & Buzzer) setup, Streamlit App Development, ntfy Push Notification Integration and Full Demo Recording. |
 | **Abha Singh Sardar** | Data Collection, Multi-axis Feature Engineering and data preprocessing; Model Training and Comparative Evaluation of Keras MLP, Random Forest, and Decision Tree architectures (Final Deployed Model); and Post-Training Quantization performance analysis. |
 | **Maitreyi Tiwari** | Data Collection, Advanced Temporal Data Augmentation and CNN Fine-tuning; Implementation of Quantization-Aware Training (QAT) and Pruning strategies; `ntfy` Mobile Alert System Debugging; Technical Documentation and Presentation Recording. |
 | **Tishha Agrawal** | Data Collection, Design and Development of 1D-CNN Temporal Architecture, Edge Model Optimization (PTQ and Pruning), Streamlit WebApp Debugging, Technical Documentation, and Visual Presentation Design for Project Video. |
