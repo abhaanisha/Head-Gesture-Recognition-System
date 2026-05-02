@@ -22,19 +22,19 @@
 
 ## 📌 Table of Contents
 
-1. [Problem Statement, Motivation & Objectives]
-2. [Proposed Solution]
-3. [Hardware & Software Setup]
-4. [Data Collection & Dataset Preparation]
-5. [Model Design, Training & Evaluation]
-6. [Model Compression & Efficiency Metrics]
-7. [Model Deployment & On-Device Performance]
-8. [System Prototype (Pictures / Figures)]
-9. [Conclusions & Limitations]
-10. [Future Work]
-11. [Challenges & Mitigation]
-12. [References]
-13. [Team]
+1. Problem Statement, Motivation & Objectives
+2. Proposed Solution
+3. Hardware & Software Setup
+4. Data Collection & Dataset Preparation
+5. Model Design, Training & Evaluation
+6. Model Compression & Efficiency Metrics
+7. Model Deployment & On-Device Performance
+8. System Prototype (Pictures / Figures)
+9. Conclusions & Limitations
+10. Future Work
+11. Challenges & Mitigation
+12. References
+13. Team
 
 ---
 
@@ -293,11 +293,11 @@ We observed that due to our limited custom dataset, the CNN lacked enough divers
 ### Performance Visualizations
 The following figures provide a visual breakdown of the trade-offs in size, speed, and accuracy across our various experimental architectures.
 
-![Model Metrics: Baseline vs Optimized](path/to/your/graph_image_1.png)
-*Figure 3: Comparison of Model Size, Accuracy, and Latency between the Heavy Baseline and Quantized TFLite versions.*
+![Model Metrics:](doc/Figure/CNN_Base.png)
+*Figure 3: Initial Architecture, Comparison of Model Size, Accuracy, and Latency between the Heavy Baseline and Quantized TFLite versions.*
 
-![Optimization Strategy: PTQ vs QAT](path/to/your/graph_image_2.png)
-*Figure 4: Performance impact of Post-Training Quantization (PTQ) and Quantization Aware Training (QAT) on model size and inference speed.*
+![Optimization Strategy:](doc/Figure/CNN_optimized.png)
+*Figure 4: Optimized Architecture and Performance impact of Post-Training Quantization (PTQ) and Quantization Aware Training (QAT) on model size and inference speed.*
 ### Resource Utilization (On-Device Profiling)
 *   **Memory (RAM):** 
     *   The **Decision Tree** uses negligible RAM as it runs as native code. 
