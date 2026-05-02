@@ -690,7 +690,17 @@ req = urllib.request.Request(
 
 - Runs in a daemon thread — non-blocking, times out after 5 seconds if no network
   
-## 8. System Prototype - Parthib will add this
+## 8. System Prototype
+
+<div align="center">
+
+[![Demo Video](https://img.shields.io/badge/▶_Watch_Full_Demo_Video-SharePoint-0078D4?style=for-the-badge&logo=microsoft)](https://indianinstituteofscience-my.sharepoint.com/:v:/g/personal/abhas_iisc_ac_in/IQCmHS_j7puyQ6OWcKqMe5GkAeruAGz5R6FupJL88lnMZLk?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=pOxfAL)
+
+<img src="doc/Figure/demo_image.png" alt="Live Demo" width="680"/>
+<br><em>Live gesture recognition — OLED displaying detected gesture in real-time</em>
+
+</div>
+
 ---
 ## 9. Conclusions & Limitations
 
