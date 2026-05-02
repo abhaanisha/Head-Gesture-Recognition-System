@@ -207,21 +207,9 @@ During **Tilt Right**: `cross_gx_mean_diff > 0` (right temple dominant).
 | **Decision Tree** | Baseline + interpretable decision rules |
 | **Random Forest** | Robust ensemble baseline |
 | **Keras Dense MLP** | Primary model for TFLite deployment |
+| **Heavy weight CNN model with 2 different branches** | A deep learning model to perfectly extract and utilize the temporal nature of data (was also quantized)|
+| **Light weight CNN model with 4 layers** | A Simpler model with less layers Particularly to facilitate edge deployment(Quantization and pruning was performed) |
 
-**Keras Architecture:**
-```
-Input (148) → Dense(128) + BN + Dropout(0.3)
-            → Dense(64)  + BN + Dropout(0.3)
-            → Dense(32)  + Dropout(0.2)
-            → Dense(7, Softmax)
-
-Total Parameters: 30,663  |  INT8 Size: ~33.6 KB
-```
-
-**Training Setup:**
-- Split: 80% train / 20% test (stratified)
-- Optimizer: Adam (lr=1e-3), Loss: Categorical Crossentropy
-- Callbacks: EarlyStopping (patience=15), ReduceLROnPlateau, ModelCheckpoint
 
 ---
 
@@ -235,6 +223,11 @@ Total Parameters: 30,663  |  INT8 Size: ~33.6 KB
 | Random Forest | **100.00%** |
 | **Keras TinyMLP** | **100.00%** |
 | INT8 TFLite | **100.00%** |
+| Heavyweight CNN | **95.66%** |
+| Heavyweight CNN quantized | **94.00%** |
+| Lightweight CNN | **96.45%** |
+| Lightweight CNN quantized | **85.24%** |
+
 
 </div>
 
