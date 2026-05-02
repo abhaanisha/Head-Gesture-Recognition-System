@@ -13,32 +13,12 @@
 **Course:** CP 330 — Edge AI &nbsp;|&nbsp; **Instructor:** Prof. Pandarasamy Arjunan &nbsp;|&nbsp; Indian Institute of Science, Bangalore
 
 *A real-time, cloud-free gesture recognition system that translates head movements into meaningful messages — running entirely on a wearable microcontroller.*
-[![Presentation Video](https://drive.google.com/file/d/1__JJ69PBDf3QR5xZBZMHhklWdVlq01Ug/view?usp=drivesdk)
+[![Presentation Video](https://img.shields.io/badge/▶_Watch_Presentation)](https://drive.google.com/file/d/1__JJ69PBDf3QR5xZBZMHhklWdVlq01Ug/view?usp=drivesdk)
 [![Demo Video](https://img.shields.io/badge/▶_Watch_Demo-SharePoint-0078D4?style=for-the-badge&logo=microsoft)](https://indianinstituteofscience-my.sharepoint.com/:v:/g/personal/abhas_iisc_ac_in/IQCmHS_j7puyQ6OWcKqMe5GkAeruAGz5R6FupJL88lnMZLk?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=pOxfAL)
 
 
 </div>
 
----
-
-## 📌 Table of Contents
-
-1. [Problem Statement](#1-problem-statement)
-2. [System Overview](#2-system-overview)
-3. [Hardware Setup](#3-hardware-setup)
-4. [Gesture Vocabulary](#4-gesture-vocabulary)
-5. [Software Architecture](#5-software-architecture)
-6. [Dataset](#6-dataset)
-7. [ML Pipeline & Feature Engineering](#7-ml-pipeline--feature-engineering)
-8. [Model Results](#8-model-results)
-9. [TinyML Deployment](#9-tinyml-deployment)
-10. [Repository Structure](#10-repository-structure)
-11. [Getting Started](#11-getting-started)
-12. [Demo](#12-demo)
-13. [Team](#13-team)
-14. [References](#14-references)
-
----
 
 ## 1. Problem Statement
 
@@ -53,49 +33,16 @@ Many elderly and differently-abled individuals have severely limited hand mobili
 
 ---
 
-## 2. System Overview
-
-<div align="center">
-<img src="doc/Figure/System Flow Diagram.png" alt="System Flow Diagram" width="480"/>
-<br><em>End-to-end system flow from head movement to feedback output</em>
-</div>
-
-<br>
-
-The system uses **two Arduino Nicla Vision boards** — one on each temple — forming a bilateral dual-IMU configuration:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    HEAD-MOUNTED WEARABLE                    │
-│                                                             │
-│  LEFT TEMPLE                         RIGHT TEMPLE           │
-│ ┌─────────────────┐   Wi-Fi UDP    ┌─────────────────┐     │
-│ │  Nicla Vision   │ ─────────────► │  Nicla Vision   │     │
-│ │  (SLAVE)        │   port 6000    │  (MASTER)       │     │
-│ │  LSM6DSRX IMU   │                │  LSM6DSRX IMU   │     │
-│ │  ax2,ay2,az2    │                │  ax1,ay1,az1    │     │
-│ │  gx2,gy2,gz2    │                │  gx1,gy1,gz1    │     │
-│ └─────────────────┘                │                 │     │
-│                                    │  ┌───────────┐  │     │
-│                                    │  │  TinyML   │  │     │
-│                                    │  │ Inference │  │     │
-│                                    │  └───────────┘  │     │
-│                                    │  SSD1306 OLED   │     │
-│                                    │  Buzzer (D2)    │     │
-│                                    └─────────────────┘     │
-└─────────────────────────────────────────────────────────────┘
-```
-
 ### Key Design Decisions
 
 | Decision | Rationale |
 |---|---|
 | **Dual IMU (12-axis)** | Single IMU cannot reliably distinguish Tilt Left vs Tilt Right; bilateral sensors provide asymmetry-based discrimination |
 | **Wi-Fi UDP** | Low-latency, connectionless — ideal for real-time 50 Hz streaming on MicroPython |
-| **TinyML On-Board** | Zero cloud dependency, zero latency, works in hospitals/rural areas without internet |
-| **OLED + Buzzer** | Dual feedback (visual + audio) for users with visual or hearing impairments |
+| **TinyML On-Board** | Zero cloud dependency, zero latency |
+| **OLED + Buzzer** | Dual feedback (visual + audio) to Alert the caregiver in case of an emergency |
 
----
+--
 
 ## 3. Hardware Setup
 
