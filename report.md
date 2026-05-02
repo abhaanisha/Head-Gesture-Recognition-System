@@ -431,10 +431,11 @@ The development of a dual-sensor wearable on an Edge platform presented several 
 
 | Name | Key Contributions & Responsibilities |
 |:---|:---|
-| **Parthib Dey** | Hardware System Integration, Master-Slave Data Collection Setup, Model Pipeline Development, and On-Device Deployment. |
-| **Abha Singh Sardar** | Primary Data Collection, Data Preprocessing, Feature Engineering, Traditional ML Model Training, and Performance Evaluation. |
-| **Tishha Agrawal** | Data Collection, CNN Model Development & Preprocessing, Post-Training Quantization (PTQ) & Pruning, Streamlit Web Application Debugging, CNN model Deployment code(tried but not deployed), and Technical Documentation. |
-| **Maitreyi Tiwari** | Data Collection, CNN Data Augmentation & Re-training, Quantization-Aware Training (QAT) & Pruning, Deployment code for CNN (tried but not deployed), `ntfy` Mobile Application debugging, and Technical Documentation. |
+| **Parthib Dey** | Hardware Integration, Data Collection Setup, Model Pipeline, Model Deployment, Inference Firmware (master.py & slave.py), Arduino UNO R4 WiFi Firmware (OLED & Buzzer) setup, Streamlit App Development, ntfy Push Notification Integration and Full Demo Recording. |
+| **Abha Singh Sardar** | Data Collection, Multi-axis Feature Engineering and data preprocessing; Model Training and Comparative Evaluation of Keras MLP, Random Forest, and Decision Tree architectures (Final Deployed Model); and Post-Training Quantization performance analysis. |
+| **Maitreyi Tiwari** | Data Collection, Advanced Temporal Data Augmentation and CNN Fine-tuning; Implementation of Quantization-Aware Training (QAT) and Pruning strategies; `ntfy` Mobile Alert System Debugging; Technical Documentation and Presentation Recording. |
+| **Tishha Agrawal** | Data Collection, Design and Development of 1D-CNN Temporal Architecture, Edge Model Optimization (PTQ and Pruning), Streamlit WebApp Debugging, Technical Documentation, and Visual Presentation Design for Project Video. |
+
 
 
 > **Course:** CP 330 — Edge AI &nbsp;|&nbsp; **Instructor:** Prof. Pandarasamy Arjunan &nbsp;|&nbsp; Indian Institute of Science (IISc), Bangalore, Semester 2, 2026
