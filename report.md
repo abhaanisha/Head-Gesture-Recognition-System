@@ -100,15 +100,22 @@ UDP port 5006 (on change)     UDP port 5005 (continuous)
 └───────────────────────┘    │  ntfy push notifications │
 └──────────────────────────┘
 ```
+## How it works
+
+The *Slave Nicla Vision* (left temple) reads its LSM6DSRX IMU at 50 Hz and streams the 6-axis data [ax, ay, az, gx, gy, gz] over Wi-Fi UDP (port 6000) to the Master. The *Master Nicla Vision* (right temple) simultaneously reads its own 6-axis IMU, combines both streams into a 12-axis sample, and fills a 20-sample sliding window. Every window, it extracts 113 statistical and cross-IMU features and runs an embedded *m2cgen Decision Tree* entirely on-device — no cloud, no external compute. A 5-sample majority vote smooths the output before dispatch.
+
+Recognised gestures are broadcast over Wi-Fi UDP to two destinations simultaneously: the *Arduino UNO R4 WiFi* (port 5006, on change only) which drives an I2C OLED display and a buzzer for immediate bedside feedback, and the *PC Streamlit app* (port 5005) which applies a second stage of majority-vote smoothing (buffer N=50, stability threshold 95%), speaks the gesture aloud via Windows TTS, and sends push notifications to a caregiver's phone through the *ntfy* app.
 
 ### Key Design Decisions
 
 | Decision | Rationale |
 |---|---|
-| **Dual IMU (12-axis)** | Single IMU cannot reliably distinguish Tilt Left vs Tilt Right; bilateral sensors provide asymmetry-based discrimination |
-| **Wi-Fi UDP** | Low-latency, connectionless — ideal for real-time 50 Hz streaming on MicroPython |
-| **TinyML On-Board** | Zero cloud dependency, zero latency, works in hospitals/rural areas without internet |
-| **OLED + Buzzer** | Dual feedback (visual + audio) for users with visual or hearing impairments |
+| *Dual IMU (12-axis)* | A single IMU cannot distinguish Tilt Left from Tilt Right — bilateral sensors expose the roll asymmetry between temples that makes these classes separable |
+| *Wi-Fi UDP* | Connectionless, low-latency — sustains stable 50 Hz streaming from MicroPython without TCP handshake overhead |
+| *m2cgen Decision Tree* | Pure Python inference with no runtime dependencies — runs directly in MicroPython on the STM32H747, eliminating the need for a TFLite runtime |
+| *Two-stage smoothing* | On-device majority vote (last 5 predictions) removes single-sample noise; Streamlit buffer (N=50, 95% threshold) prevents flicker on the display |
+| *Separate UNO R4 WiFi for output* | Offloads OLED and buzzer driving from the inference board, keeping the Master free for real-time sensing and classification |
+| *ntfy push notifications* | Caregivers receive alerts on their phone even when away from the PC display — 15-second cooldown prevents notification spam |
 
 ---
 ## 3. Hardware and Software Setup - Parthib will add
