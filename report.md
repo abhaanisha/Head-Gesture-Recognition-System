@@ -475,23 +475,220 @@ Decision tree achieved 100% accuracy
 ---
 ## 7. Model Deployment & On-Device Performance
 
-Deploying the intelligence onto the head-mounted gear required a precise integration of our data-scaling logic, the synchronized wireless communication, and the final classification model.
+The deployment pipeline spans three layers — on-device inference running on the Master Nicla Vision, physical feedback via the Arduino UNO R4 WiFi, and remote monitoring via the PC Streamlit app with ntfy push notifications. All communication is over Wi-Fi UDP with no cloud dependency for inference.
 
-### Deployment Steps
-1.  **Model Conversion:** The trained **Decision Tree** was converted into a static C++ header file (`model.h`). This approach transpiled the logical branches of the tree into a series of optimized `if-else` statements, allowing it to run as native machine code without the need for a heavy runtime interpreter.
-2.  **Wireless Integration:** The Slave Nicla was flashed with a dedicated UDP-sender script that broadcasts its 6-axis readings at 50Hz. The Master Nicla was flashed with a multi-threaded logic that listens for these UDP packets, merges them with its own 6-axis readings, and triggers the inference engine.
-3.  **Hardware Interfacing:** The final firmware includes drivers for the **OLED SSD1306** (to display gesture results) and the **Active Buzzer** (to provide audible confirmation for specific alerts like "Help" or "Emergency").
+### On-Device Inference — Master Nicla Vision
 
-### Performance on Arduino Nicla Vision
-*   **Inference Time:** Because the Decision Tree runs as native C++ logic, the inference time is **under 0.01 ms**. This is effectively "instantaneous" relative to the 20ms sampling interval, providing zero-lag feedback to the user.
-*   **Resource Utilization:** 
-    *   **CPU Load:** Extremely low. The processor spends most of its time waiting for the next sensor sample or managing the WiFi stack.
-    *   **Memory Efficiency:** The entire deployment binary uses less than **20% of the available SRAM**, ensuring the device never crashes due to memory overflow.
-*   **Real-time Behavior:** The system maintains a consistent **50Hz control loop**. We implemented a "Last-Known-Value" buffer for the Slave sensor data; if a UDP packet is lost due to network jitter, the Master uses the previous sample to maintain a continuous 12-axis feature vector, preventing gaps in the recognition stream.
+Unlike typical TinyML pipelines that require a TFLite runtime or ONNX interpreter, this system uses *m2cgen* to export the trained Decision Tree as a pure Python score() function — containing only if/else comparisons on feature indices. This runs natively in *MicroPython* on the STM32H747 with zero external dependencies.
 
-### Deployment Observations
-*   **Wireless Latency:** The UDP-based synchronization achieved a latency of less than **15ms**, which is well within the acceptable limit for real-time human activity recognition.
-*   **User Feedback Loop:** Testing confirmed that from the moment a user completes a "Nod" or "Shake," the OLED display updates and the buzzer sounds in under **250ms**, providing a highly responsive experience for the motor-impaired user.
+#### Model Export with m2cgen
+
+After training in model_development.ipynb, the Decision Tree is exported:
+
+```text
+import m2cgen as m2c
+code = m2c.export_to_python(decision_tree_model)
+print(code)
+```
+
+The output is a self-contained Python function — no NumPy, no scikit-learn, no runtime library required. This function is copied directly into master.py.
+
+*Exported score() function (embedded in master.py):*
+
+```text
+def score(input):
+    if input[78] <= 2.9801491498947144:
+        if input[111] <= 6447.829833984375:
+            if input[8] <= 0.5377808511257172:
+                if input[3] <= -0.1123657338321209:
+                    return [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+                else:
+                    if input[42] <= 3293.8863525390625:
+                        return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
+                    else:
+                        return [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            else:
+                return [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+        else:
+            if input[96] <= 10047.057373046875:
+                if input[3] <= -0.1484375186264515:
+                    return [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+                else:
+                    if input[51] <= 4963.455078125:
+                        return [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+                    else:
+                        return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            else:
+                return [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    else:
+        if input[74] <= -0.07305900380015373:
+            if input[8] <= -0.5585937574505806:
+                return [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+            else:
+                return [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+        else:
+            if input[0] <= 0.6474524587392807:
+                return [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+            else:
+                return [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+```
+
+The output is a 7-element probability vector. The predicted class is the index of the maximum value (argmax), 1-indexed to match CLASS_NAMES.
+
+#### Real-Time Inference Flow
+
+
+Every 20 ms:
+  1. Read Master IMU  → [ax1, ay1, az1, gx1, gy1, gz1]
+  2. Receive Slave UDP (port 6000) → [ax2, ay2, az2, gx2, gy2, gz2]
+  3. Append 12-value sample to circular window buffer (20 samples)
+  4. When window full:
+       a. Extract 113 features (9 stats × 12 channels + 5 cross-IMU)
+       b. Pass feature vector to score(features) → 7-class probability vector
+       c. argmax → predicted class index (1–7)
+       d. Apply 5-sample majority vote smoothing
+       e. Map class index to CLASS_NAMES → gesture string
+       f. Send "cls,gesture_name" → PC on UDP port 5005 (every cycle)
+       g. Send "cls,gesture_name" → UNO R4 on UDP port 5006 (on change only)
+  5. Slide window by 1 sample, repeat
+
+
+#### Class Mapping
+
+```text
+CLASS_NAMES = {
+    1: "Nod",
+    2: "Head_Shake",
+    3: "Tilt_Left",
+    4: "Tilt_Right",
+    5: "Look_Up",
+    6: "Look_Down",
+    7: "Idle"
+}
+```
+
+#### Why m2cgen over TFLite
+
+| | m2cgen Decision Tree | TFLite INT8 |
+|---|---|---|
+| *Runtime required* | None — pure Python if/else | TFLite Micro C++ runtime |
+| *MicroPython compatible* | Yes — runs natively | No — requires C++ firmware |
+| *Model size on device* | ~3 KB (Python code) | ~39 KB (binary flatbuffer) |
+| *External dependencies* | None | TFLite Micro, flatbuffers |
+| *Inference latency* | < 1 ms (integer comparisons) | 15–40 ms (matrix multiply) |
+| *Quantisation needed* | No | Yes (INT8 conversion) |
+| *Accuracy* | 100% on test set | ~98% post-quantisation |
+
+
+### Physical Output — Arduino UNO R4 WiFi
+
+The Arduino UNO R4 WiFi receives gesture results from the Master over UDP and drives the immediate bedside feedback — OLED display and buzzer.
+
+#### Communication
+- Listens on UDP *port 5006*
+- Master sends only *on gesture change* — reduces network traffic and prevents redundant OLED redraws
+- Packet format: "cls,gesture_name" e.g. "3,Tilt_Left"
+
+#### OLED Display (SSD1306 128×64, I2C 0x3C)
+- *Idle state* → showIdle():
+
+  Waiting for
+  Gesture...
+
+- *Any gesture* → showGesture(cls, name):
+
+  Gesture Detected:
+  
+  Tilt_Left
+  
+  Class: 3
+
+
+#### Buzzer (Digital pin 9)
+- buzzOnce() — 150 ms HIGH pulse on every new non-idle gesture
+- Single buzz on startup confirms Wi-Fi connected and UDP listening
+
+#### Startup Sequence
+
+1. OLED initialises → displays "Connecting WiFi..."
+2. Wi-Fi connects → UDP begins on port 5006
+3. OLED shows "Waiting for Gesture..."
+4. Buzzer fires once → system ready
+
+
+### PC Monitor — Streamlit App + ntfy Notifications
+
+The PC Streamlit app provides a second stage of smoothing, a live web dashboard, voice feedback, and remote push notifications to a caregiver's phone.
+
+#### Two-Stage Smoothing Architecture
+
+The Master already applies a *5-sample majority vote* on-device. The Streamlit app adds a second, stricter smoothing layer:
+
+| Stage | Where | Method | Purpose |
+|---|---|---|---|
+| Stage 1 | Master Nicla | 5-sample majority vote | Remove single-sample noise |
+| Stage 2 | Streamlit app | 50-sample buffer, 95% threshold | Prevent display flicker, stable output |
+
+A gesture only updates on the dashboard when *one class holds ≥95% of the last 50 predictions* — meaning 47 or more of the last 50 packets must agree before the display changes.
+
+#### UDP Listener (Background Thread)
+- Binds to *port 5005*, runs in a daemon thread independent of Streamlit's render loop
+- Fills a deque(maxlen=50) rolling buffer with raw (cls, gesture) tuples
+- On stable gesture change:
+  - Updates counts dict and prepends to history list (capped at 20 entries)
+  - Triggers Windows TTS and ntfy (non-idle gestures only)
+- Writes full state to gesture_data.json on every received packet for the UI to read
+
+#### Streamlit UI
+- Polls gesture_data.json every *400 ms* via time.sleep(0.4) render loop
+- Renders a large *colour-coded gesture card* per gesture:
+
+| Gesture | Card Colour |
+|---|---|
+| Nod | #00C48C (green) |
+| Head Shake | #FF4D4D (red) |
+| Tilt Left | #F5A623 (amber) |
+| Tilt Right | #4CAF50 (green) |
+| Look Up | #2979FF (blue) |
+| Look Down | #FF6D00 (orange) |
+| Idle | #9E9E9E (grey) |
+
+- Shows *class number, **last updated timestamp, and **recent activity history* (last 10 gestures)
+
+#### Windows Text-to-Speech
+- Fires on every confirmed non-idle gesture change
+- Uses PowerShell System.Speech.Synthesis.SpeechSynthesizer — no Python audio library required:
+python
+ps_command = f'Add-Type –AssemblyName System.Speech; \
+(New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak("{gesture}")'
+subprocess.run(["powershell", "-Command", ps_command])
+
+- Runs in a daemon thread — does not block the UDP listener or UI
+
+#### ntfy Push Notifications
+- Topic: Head_Gesture_Recognition on https://ntfy.sh
+- Subscribe on phone via the *ntfy app* (Android / iOS) to receive alerts
+- *15-second per-gesture cooldown* — prevents notification spam if a gesture is held
+
+| Gesture | Notification Message |
+|---|---|
+| Nod | User nodded - may need assistance. |
+| Head Shake | User shaking head - check on them. |
+| Tilt Left | User tilting left. |
+| Tilt Right | User tilting right. |
+| Look Up | User looking up. |
+| Look Down | User looking down. |
+
+```text
+req = urllib.request.Request(
+    f"https://ntfy.sh/{NTFY_TOPIC}",
+    data=msg.encode(),
+    headers={"Title": f"Alert: {gesture}", "Priority": "high", "Tags": "brain"},
+    method="POST"
+)
+```
+
+- Runs in a daemon thread — non-blocking, times out after 5 seconds if no network
   
 ## 8. System Prototype - Parthib will add this
 ---
