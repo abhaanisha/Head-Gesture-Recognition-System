@@ -187,10 +187,7 @@ All three devices connect to the same Wi-Fi network. Assign static IPs or note t
 #### Data_receive.py — PC Side
 - Binds to UDP *port 5005, prompts for an **activity label, then starts a **5-second countdown*
 - Records for *250 seconds* — skips any packet where len(values) != 13
-- Saves to a timestamped CSV in imu_data/:
-
-
-<activity>_<YYYYMMDD_HHMMSS>.csv
+- Saves to a timestamped CSV in imu_data/: <activity>_<YYYYMMDD_HHMMSS>.csv
 
 
 *CSV schema:*
