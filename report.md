@@ -272,7 +272,52 @@ We performed a comparative study between traditional Machine Learning and Deep L
 
 ### 5.1 Deployment Model: Decision Tree Classifier
 The Decision Tree was selected as the primary deployment target. It provides a non-linear classification path that is extremely lightweight, consisting of a series of simple `if-else` logical branches that run nearly instantaneously on a microcontroller.
-*   **Architecture:**: .
+
+### Feature Engineering
+
+The feature pipeline operates on **1-second sliding windows** (50 samples @ 50 Hz) with **50% overlap**:
+<div align="center">
+<img src="doc/Dual-IMU_Feature_Engineering.png" alt="Feature Engineering Pipeline" width="780"/>
+<br><em>Dual-IMU feature engineering: 148-dimensional feature vector from a 1-second window</em>
+</div>
+#### Group 1 — Per-Channel Statistical Features (132 features)
+11 statistics × 12 IMU channels (ax1, ay1, az1, gx1, gy1, gz1, ax2, ay2, az2, gx2, gy2, gz2):
+
+| Feature | Description |
+|---|---|
+| `mean` | Average value (DC offset, bias direction) |
+| `std` | Standard deviation (motion spread) |
+| `min` / `max` | Peak excursion |
+| `var` | Variance (energy of fluctuation) |
+| `rms` | Root mean square (total motion magnitude) |
+| `energy` | Sum of squares (total signal power) |
+| `iqr` | Interquartile range (robust spread) |
+| `median` | Robust central value |
+| `skewness` | Asymmetry of motion profile |
+| `kurtosis` | Peakedness (impulse-like vs. smooth) |
+
+#### Group 2 — Spectral Features (12 features)
+2 FFT features × 6 gyroscope channels (gx1, gy1, gz1, gx2, gy2, gz2):
+
+| Feature | Description |
+|---|---|
+| `dominant_frequency` | Frequency bin with highest FFT magnitude (gesture tempo) |
+| `spectral_entropy` | Distribution of spectral energy (periodic vs. irregular) |
+
+#### Group 3 — Cross-IMU Symmetry Features (4 features)
+> 🔑 **The key innovation** — designed specifically to discriminate Tilt Left vs Tilt Right, which appear identical to a single IMU.
+
+| Feature | Formula | Physical Meaning |
+|---|---|---|
+| `cross_gx_mean_diff` | `mean(gx1) - mean(gx2)` | Roll asymmetry: sign flips between Tilt L and Tilt R |
+| `cross_gx_rms_diff` | `rms(gx1) - rms(gx2)` | Energy-weighted roll asymmetry |
+| `cross_gz_mean_diff` | `mean(gz1) - mean(gz2)` | Yaw asymmetry during tilts |
+| `cross_gz_corr` | `Pearson(gz1, gz2)` | Bilateral synchrony: +1 = same direction, -1 = opposite |
+
+During **Tilt Left**: `cross_gx_mean_diff < 0` (left temple dominant).  
+During **Tilt Right**: `cross_gx_mean_diff > 0` (right temple dominant).
+
+
 *   **Performance:** Achieved **99.9% - 100% test accuracy**, masterfully handling the 12-axis feature vector with a negligible memory footprint.
 The evaluation metrics observed for Decision Tree model are:
 ### Decision Tree Accuracy: 100.00%
