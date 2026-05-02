@@ -312,6 +312,8 @@ The following figures provide a visual breakdown of the trade-offs in size, spee
 
 ![Optimization Strategy:](doc/Figure/CNN_optimized.png)
 *Figure 4: Optimized Architecture and Performance impact of Post-Training Quantization (PTQ) and Quantization Aware Training (QAT) on model size and inference speed.*
+Decision tree achieved 100% accuracy
+![Optimization Strategy:](doc/Figure/Decision_tree_cm.png)
 ### Resource Utilization (On-Device Profiling)
 *   **Memory (RAM):** 
     *   The **Decision Tree** uses negligible RAM as it runs as native code. 
