@@ -394,3 +394,39 @@ The development of a dual-sensor wearable on an Edge platform presented several 
 *   **Mitigation:** We utilized **StandardScaler (Z-score Normalization)** during pre-processing. By centering all 12 axes around a mean of zero and scaling by standard deviation, we made the model **"Gravity-Invariant."** This forced the neural network to focus on the *relative change* in motion rather than the absolute angle of the sensors, allowing the system to generalize across different users.
 ---
 ## 12. References -  Parthib/Abha will add
+
+[1] Gouwanda, D., & Senanayake, S. A. (2011). Identifying gait asymmetry using gyroscopes—A cross-correlation and Normalized Symmetry Index approach. *Journal of Biomechanics*, 44(5), 972–978.
+
+[2] Ortega-Anderez, D., Lotfi, A., Langensiepen, C., & Appiah, K. (2019). A multi-level refinement approach towards the classification of quotidian activities using accelerometer data. *Journal of Ambient Intelligence and Humanized Computing*, 10(11), 4319–4330.
+
+<div align="center">
+
+[![Demo Video](https://img.shields.io/badge/▶_Watch_Full_Demo_Video-SharePoint-0078D4?style=for-the-badge&logo=microsoft)](https://indianinstituteofscience-my.sharepoint.com/:v:/g/personal/abhas_iisc_ac_in/IQCmHS_j7puyQ6OWcKqMe5GkAeruAGz5R6FupJL88lnMZLk?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=pOxfAL)
+
+<img src="doc/Figure/demo_image.png" alt="Live Demo" width="680"/>
+<br><em>Live gesture recognition — OLED displaying detected gesture in real-time</em>
+
+</div>
+
+---
+
+## 13. Team Members and Roles
+
+| Name | Key Contributions & Responsibilities |
+|:---|:---|
+| **Parthib Dey** | Hardware System Integration, Master-Slave Data Collection Setup, Model Pipeline Development, and On-Device Deployment. |
+| **Abha Singh Sardar** | Primary Data Collection, Data Preprocessing, Feature Engineering, Traditional ML Model Training, and Performance Evaluation. |
+| **Tishha Agrawal** | Data Collection, CNN Model Development & Preprocessing, Post-Training Quantization (PTQ) & Pruning, Streamlit Web Application Debugging, CNN model Deployment code(tried but not deployed), and Technical Documentation. |
+| **Maitreyi Tiwari** | Data Collection, CNN Data Augmentation & Re-training, Quantization-Aware Training (QAT) & Pruning, Deployment code for CNN (tried but not deployed), `ntfy` Mobile Application debugging, and Technical Documentation. |
+
+
+> **Course:** CP 330 — Edge AI &nbsp;|&nbsp; **Instructor:** Prof. Pandarasamy Arjunan &nbsp;|&nbsp; Indian Institute of Science (IISc), Bangalore, Semester 2, 2026
+---
+
+<div align="center">
+
+**Built with ❤️ at IISc Bangalore**
+
+*Making communication accessible for everyone*
+
+</div>
