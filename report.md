@@ -64,7 +64,7 @@ Our solution utilizes a head-mounted wearable that translates head motion into a
 ### System Overview
 
 <div align="center">
-<img src="doc/Figure/System Flow Diagram.png" alt="System Flow Diagram" width="480"/>
+<img src="doc/Figure/System_flow_diagram.png" alt="System Flow Diagram" width="480"/>
 <br><em>End-to-end system flow from head movement to feedback output</em>
 </div>
 
