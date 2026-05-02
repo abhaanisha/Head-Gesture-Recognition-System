@@ -143,8 +143,6 @@ The system recognises 7 states (6 gestures + idle):
 - `test_*.csv` files are calibration recordings — excluded from training
 
 
-```
-
 ---
 
 ## 7. ML Pipeline & Feature Engineering
