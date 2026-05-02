@@ -121,26 +121,121 @@ The system uses **two Arduino Nicla Vision boards** — one on each temple — f
 ## 5. Model Design, Training & Evaluation
 We performed a comparative study between traditional Machine Learning and Deep Learning architectures to find the best fit for the Arduino Nicla Vision.
 
-### Deployment Model: Decision Tree Classifier
+### 5.1 Deployment Model: Decision Tree Classifier
 The Decision Tree was selected as the primary deployment target. It provides a non-linear classification path that is extremely lightweight, consisting of a series of simple `if-else` logical branches that run nearly instantaneously on a microcontroller.
 *   **Architecture:**: .
 *   **Performance:** Achieved **99.9% - 100% test accuracy**, masterfully handling the 12-axis feature vector with a negligible memory footprint.
 
-### Research Model: 1D-Convolutional Neural Network (CNN)
+### 5.2 Research Model: 1D-Convolutional Neural Network (CNN)
 As an advanced research path, we developed a 1D-CNN to capture the temporal "shape" of gestures.
-*   **Architecture:** Input (80,12) $\rightarrow$ Gaussian Noise $\rightarrow$ Conv1D (32 filters) $\rightarrow$ Dropout (0.4) $\rightarrow$ GlobalAvgPool1D $\rightarrow$ Dense (16) $\rightarrow$ Softmax (7).
-*   **Purpose:** To evaluate the model's ability to generalize across varying gesture speeds and handle high-frequency sensor jitter through automated feature extraction.
+### 5.2.1 **Initial Architecture:**  Split-Path CNN Architecture for IMU Gesture Recognition
+
+#### Architectural Flowchart
+
+    A["Input\n(80 timesteps x 12 channels)\n6 Master IMU + 6 Slave IMU"] --> B["GaussianNoise (0.1)\nCorrupts data to prevent memorization"]
+    
+    B --> C["Conv1D Block 1\n64 filters, kernel=5, ReLU\nL2=0.005"]
+    C --> D["BatchNorm"]
+    D --> E["MaxPooling1D (pool=2)\nOutput: 38 x 64"]
+    E --> F["Dropout (0.4)"]
+    
+    F --> G["Conv1D Block 2\n128 filters, kernel=5, ReLU\nL2=0.005"]
+    G --> H["BatchNorm"]
+    H --> I["MaxPooling1D (pool=2)\nOutput: 17 x 128"]
+    I --> J["Dropout (0.4)"]
+    
+    J --> K["Branch A: GlobalAveragePooling1D\nCaptures POSTURE (gravity vector)\nOutput: 128"]
+    J --> L["Branch B: Flatten\nCaptures MOTION (full waveform)\nOutput: 17 x 128 = 2176"]
+    
+    K --> M["Concatenate\nOutput: 128 + 2176 = 2304"]
+    L --> M
+    
+    M --> N["Dense (64, ReLU)\nL2=0.005"]
+    N --> O["Dropout (0.4)"]
+    O --> P["Dense (7, Softmax)\nFinal Classification"]
+    
+    P --> Q["Output Classes:\n1. Nod\n2. Head Shake\n3. Tilt Left\n4. Tilt Right\n5. Look Up\n6. Look Down\n7. Idle"]
+
+    style A fill:#4285F4,color:#fff
+    style K fill:#34A853,color:#fff
+    style L fill:#EA4335,color:#fff
+    style M fill:#FBBC05,color:#000
+    style P fill:#4285F4,color:#fff
+    style Q fill:#202124,color:#fff
 
 
-| Layer | Function | Purpose |
-| :--- | :--- | :--- |
-| **Input** | () | 12-axis IMU stream (Acc + Gyro) |
-| **Gaussian Noise** | Regularization | Simulates sensor jitter to improve robustness |
-| **Conv1D (32 filters)**| Feature Extraction | Learns local patterns (slopes, peaks) |
-| **Dropout (0.4)** | Regularization | Prevents overfitting to specific users |
-| **GlobalAvgPool1D** | Compression | Massive reduction in parameters for Edge RAM |
-| **Dense (16 neurons)** | Pattern Logic | Combines features into gesture logic |
-| **Softmax (7)** | Classification | Probabilistic output for the 7 gestures |
+## Data Shape Flow
+
+| Layer | Output Shape | Purpose |
+|-------|-------------|---------|
+| Input | (80, 12) | 1.6 sec window x 12 IMU channels |
+| GaussianNoise | (80, 12) | Anti-overfitting noise injection |
+| Conv1D (64) | (76, 64) | Detects local motion patterns |
+| MaxPooling1D | (38, 64) | Downsamples, keeps peaks |
+| Conv1D (128) | (34, 128) | Detects deeper features |
+| MaxPooling1D | (17, 128) | Further downsampling |
+| Branch A: GAP | (128) | Averages entire window - Gravity/Posture |
+| Branch B: Flatten | (2176) | Preserves full timeline - Motion sequence |
+| Concatenate | (2304) | Merges posture + motion |
+| Dense (64) | (64) | Final decision logic |
+| Dense (7) | (7) | Softmax probabilities |
+
+## Why the Split?
+
+The split into two branches is the core innovation of this architecture.
+
+- *Branch A (GlobalAveragePooling)* answers: "On average, which way is gravity pulling?" This perfectly identifies static postures like Look Down, Look Up, and Idle.
+- *Branch B (Flatten)* answers: "What was the exact sequence of movement over 1.6 seconds?" This perfectly identifies dynamic gestures like Nod, Head Shake, and Tilts.
+
+By concatenating both branches, the Dense layer receives the best of both worlds and can make highly informed decisions.
+
+### 5.2.2 **Optimized Architecture:** Sequential CNN Architecture for IMU Gesture Recognition
+
+#### Architectural Flowchart
+
+    A["Input\n(80 timesteps x 12 channels)\n6 Master IMU + 6 Slave IMU"] --> B["GaussianNoise (0.1)\nAdds random noise to prevent memorization"]
+    
+    B --> C["Conv1D Block 1\n32 filters, kernel=3, ReLU\nScans 3-tick (60ms) patterns"]
+    C --> D["Dropout (0.4)\nRandomly disables 40% of neurons"]
+    
+    D --> E["Conv1D Block 2\n64 filters, kernel=3, ReLU\nExtracts deeper features"]
+    E --> F["Dropout (0.4)\nRandomly disables 40% of neurons"]
+    
+    F --> G["GlobalAveragePooling1D\nAverages entire window into\none value per filter\nOutput: 64"]
+    
+    G --> H["Dense (32, ReLU)\nFinal decision logic"]
+    H --> I["Dense (7, Softmax)\nProbability per gesture class"]
+    
+    I --> J["Output Classes:\n1. Nod\n2. Head Shake\n3. Tilt Left\n4. Tilt Right\n5. Look Up\n6. Look Down\n7. Idle"]
+
+    style A fill:#4285F4,color:#fff
+    style G fill:#34A853,color:#fff
+    style I fill:#4285F4,color:#fff
+    style J fill:#202124,color:#fff
+
+
+## Data Shape Flow
+
+| Layer | Output Shape | Parameters | Purpose |
+|-------|-------------|------------|---------|
+| Input | (80, 12) | 0 | 1.6 sec window x 12 IMU channels |
+| GaussianNoise | (80, 12) | 0 | Anti-overfitting noise injection |
+| Conv1D (32) | (78, 32) | 1,184 | Detects short motion patterns |
+| Dropout (0.4) | (78, 32) | 0 | Prevents over-reliance on any filter |
+| Conv1D (64) | (76, 64) | 6,208 | Extracts deeper temporal features |
+| Dropout (0.4) | (76, 64) | 0 | Prevents over-reliance on any filter |
+| GlobalAveragePooling1D | (64) | 0 | Compresses full window into posture summary |
+| Dense (32) | (32) | 2,080 | Learns decision boundaries |
+| Dense (7) | (7) | 231 | Softmax classification |
+| *Total* | | *9,703* | |
+
+## Key Design Decisions
+
+- *No MaxPooling:* Uses GlobalAveragePooling1D instead, which preserves the gravity baseline signal rather than only keeping peak values.
+- *No Flatten:* Avoids exploding the parameter count. Flatten would create a (76 x 64 = 4,864) vector feeding into Dense, massively increasing model size and overfitting risk.
+- *No BatchNormalization:* Removed to prevent stripping the DC offset (gravity vector) which is critical for distinguishing static postures.
+- *Small Filters (32/64):* Deliberately kept small to prevent memorization and to fit within Nicla Vision SRAM constraints.
+- *Kernel Size 3:* Scans 3 consecutive timesteps (60ms at 50Hz), capturing rapid micro-movements within gestures.
 
 ### Training Setup
 *   **Data Split:** Implemented a strict **File-Based Split** (80% Train, 20% Validation) to ensure that windows from the same recording never appeared in both sets, preventing "Data Leakage."
@@ -167,15 +262,46 @@ The following table compares the raw research model (CNN) against the optimized 
 
 | Model Approach | Model Size | Inference Latency | Accuracy | Memory Type |
 | :--- | :--- | :--- | :--- | :--- |
-| **1D-CNN (Float32)** |  KB |  ms | % | Needs TFLite RAM |
-| **1D-CNN (INT8)** |  KB | ms | % | Needs TFLite RAM |
+| **1D-CNN (Float32)** |  153.3 KB | 0.4933 ms | 96.45 % | Needs TFLite RAM |
+| **1D-CNN (INT8)** (QAT) |  17 KB | 0.1590 ms |84.10 % | Needs TFLite RAM |
+| **1D-CNN (INT8)** (PQT) |  16.6 KB | 0.1072 ms |85.24 % | Needs TFLite RAM |
 | **Decision Tree (Deployed)** | **KB** | **< 0.01 ms** | **100%** | **Static Flash** |
 
+## 6. Model Compression & Efficiency Metrics
+
+A critical phase of this project involved a comparative study between a high-performance "Heavy" CNN and an optimized "Edge-Ready" version. This allowed us to quantify the exact trade-offs required to fit deep learning intelligence onto the Arduino Nicla Vision hardware.
+
+### Optimization Techniques
+*   **Post-Training Quantization (PTQ):** We utilized 8-bit integer quantization to shrink the model size and accelerate inference on the microcontroller’s hardware.
+*   **Quantization Aware Training (QAT):** We simulated the effects of 8-bit precision loss during the training phase to improve the robustness of the optimized model.
+*   **Architectural Selection:** We moved from a heavy baseline architecture to a more serialized, filter-efficient design to minimize the static RAM footprint.
+
+### Efficiency Comparison (CNN Research Path)
+The table below tracks the metrics captured during our transition from the high-precision baseline to the deployment-ready quantized version:
+
+| Metric | Heavy CNN Baseline | Optimized Quantized CNN | Improvement |
+| :--- | :--- | :--- | :--- |
+| **Model Size (KB)** | 2329.94 KB | **153 KB** | **~12x Smaller** |
+| **Inference Time** | 0.2640 ms | **0.1072 ms** | **~2.5x Faster** |
+| **Test Accuracy** | 95.66% | **85.34%** | -10.32% |
+
+### Analysis and Final Deployment Strategy
+Our initial "Heavy" CNN achieved an impressive accuracy of **95.66%**, but its **2.3 MB** size exceeded the 2 MB total Flash limit of the Nicla Vision (especially when considering the space required for OLED and WiFi drivers). While our optimization efforts successfully reduced the model size by over **11x**, the resulting accuracy dropped to **~85%**. 
+
+We observed that due to our limited custom dataset, the CNN lacked enough diverse samples to maintain high precision after the significant data loss caused by 8-bit quantization. Consequently, we made the strategic decision to back off from deploying the CNN in the final prototype. Instead, we prioritized the **Decision Tree model**, as it maintained **100% accuracy** with an even smaller footprint, ensuring the most stable real-time behavior for the assistive device.
+
+### Performance Visualizations
+The following figures provide a visual breakdown of the trade-offs in size, speed, and accuracy across our various experimental architectures.
+
+![Model Metrics: Baseline vs Optimized](path/to/your/graph_image_1.png)
+*Figure 3: Comparison of Model Size, Accuracy, and Latency between the Heavy Baseline and Quantized TFLite versions.*
+
+![Optimization Strategy: PTQ vs QAT](path/to/your/graph_image_2.png)
+*Figure 4: Performance impact of Post-Training Quantization (PTQ) and Quantization Aware Training (QAT) on model size and inference speed.*
 ### Resource Utilization (On-Device Profiling)
 *   **Memory (RAM):** 
     *   The **Decision Tree** uses negligible RAM as it runs as native code. 
-    *   The **1D-CNN** requires a ~200 KB "Tensor Arena" in RAM. 
-    *   Choosing the Decision Tree allowed us to keep over **80% of the RAM free** for the OLED display buffers and the high-load UDP WiFi stack.
+    *   Choosing the Decision Tree allowed us to keep over **90% of the RAM free** for the OLED display buffers and the high-load UDP WiFi stack.
 *   **Flash Storage:** Both models fit comfortably within the 2MB Flash, but the Decision Tree is so small it allows for the storage of extensive gesture-to-action lookup tables.
 
 ### Observed Trade-offs & Engineering Decision
