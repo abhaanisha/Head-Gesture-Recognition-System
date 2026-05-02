@@ -45,21 +45,19 @@ Many elderly and differently-abled individuals have severely limited hand mobili
 
 ---
 
+### System Overview
+
+<div align="center">
+<img src="doc/Figure/System_flow_diagram.png" alt="System Flow Diagram" width="480"/>
+<br><em>End-to-end system flow from head movement to feedback output</em>
+</div>
+
 ## 2. Hardware Setup
 
 <div align="center">
 <img src="doc/Figure/Head Sensor Placement Diagram.png" alt="Sensor Placement" width="480"/>
 <br><em>Dual Nicla Vision boards mounted at left and right temples</em>
 </div>
-
-<br>
-
-<div align="center">
-<img src="doc/Figure/Wire Connection Diagram.png" alt="Wiring Diagram" width="600"/>
-<br><em>Complete wiring: UART (Slave→Master), I2C OLED, Buzzer</em>
-</div>
-
-<br>
 
 ### Physical Setup
 
