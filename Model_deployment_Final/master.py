@@ -2,9 +2,6 @@ import network, time, socket, math
 from machine import Pin, SPI, LED
 from lsm6dsox import LSM6DSOX
 
-# =========================
-# CONFIG
-# =========================
 SSID        = "Parthibg60"
 KEY         = "Parthib123"
 
@@ -28,9 +25,7 @@ CLASS_NAMES = {
     7: "Idle"
 }
 
-# =========================
-# WIFI
-# =========================
+
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 wlan.connect(SSID, KEY)
@@ -40,9 +35,7 @@ while not wlan.isconnected():
 
 print("Master IP:", wlan.ifconfig()[0])
 
-# =========================
-# SOCKETS
-# =========================
+
 recv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 recv_sock.bind(("0.0.0.0", PORT))
 recv_sock.setblocking(False)
@@ -50,9 +43,6 @@ recv_sock.setblocking(False)
 pc_sock  = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 uno_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-# =========================
-# IMU
-# =========================
 spi = SPI(5)
 cs  = Pin("PF6", Pin.OUT_PP, Pin.PULL_UP)
 lsm = LSM6DSOX(spi, cs)
@@ -60,15 +50,11 @@ lsm = LSM6DSOX(spi, cs)
 green_led = LED("LED_GREEN")
 red_led   = LED("LED_RED")
 
-# =========================
-# BUFFER
-# =========================
+
 imu_buffer = []
 last_slave = None
 
-# =========================
-# FEATURE HELPERS
-# =========================
+
 def mean(x):
     return sum(x) / len(x)
 
@@ -86,9 +72,7 @@ def median_iqr(x):
     n = len(s)
     return s[n // 2], s[3 * n // 4] - s[n // 4]
 
-# =========================
-# FEATURE EXTRACTION (113)
-# =========================
+
 def extract_features(window):
     features = []
 
@@ -129,9 +113,7 @@ def extract_features(window):
 
     return features
 
-# =========================
-# MODEL (m2cgen DecisionTree)
-# =========================
+
 def score(input):
     if input[78] <= 2.9801491498947144:
         if input[111] <= 6447.829833984375:
@@ -169,9 +151,7 @@ def score(input):
                 var0 = [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0]
     return var0
 
-# =========================
-# SMOOTHING (majority vote, last 5)
-# =========================
+
 pred_buffer = []
 
 def smooth(pred):
@@ -183,9 +163,6 @@ def smooth(pred):
         counts[p] = counts.get(p, 0) + 1
     return max(counts, key=counts.get)
 
-# =========================
-# MAIN LOOP
-# =========================
 counter       = 0
 last_cls      = None
 TARGET_PERIOD = 20  # ms → 50 Hz to match slave
@@ -200,12 +177,10 @@ def _wait(next_tick):
 
 while True:
 
-    # --- MASTER IMU ---
     a = lsm.accel()
     g = lsm.gyro()
     master_data = [a[0], a[1], a[2], g[0], g[1], g[2]]
 
-    # --- RECEIVE SLAVE ---
     try:
         data, _ = recv_sock.recvfrom(256)
         parts = data.decode().strip().split(",")
@@ -222,7 +197,7 @@ while True:
         next_tick = time.ticks_add(next_tick, TARGET_PERIOD)
         continue
 
-    # --- BUILD WINDOW ---
+    
     sample = master_data + last_slave
     imu_buffer.append(sample)
 
@@ -234,7 +209,6 @@ while True:
         next_tick = time.ticks_add(next_tick, TARGET_PERIOD)
         continue
 
-    # --- INFERENCE ---
     features = extract_features(imu_buffer)
 
     if len(features) != 113:
@@ -250,18 +224,18 @@ while True:
 
     gesture_name = CLASS_NAMES[cls]
 
-    # --- PRINT (every 10 cycles = 200 ms) ---
+
     counter += 1
     if counter % 10 == 0:
         print("Gesture:", cls, "→", gesture_name)
 
-    # --- SEND TO PC ---
+
     try:
         pc_sock.sendto("{},{}".format(cls, gesture_name).encode(), (PC_IP, PC_PORT))
     except:
         pass
 
-    # --- SEND TO UNO R4 WIFI (only on change to reduce UDP spam) ---
+
     if cls != last_cls:
         try:
             uno_sock.sendto("{},{}".format(cls, gesture_name).encode(), (UNO_IP, UNO_PORT))
