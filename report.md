@@ -12,6 +12,8 @@
 
 **Course:** CP 330 — Edge AI &nbsp;|&nbsp; **Instructor:** Prof. Pandarasamy Arjunan &nbsp;|&nbsp; Indian Institute of Science, Bangalore
 
+[![Course](https://img.shields.io/badge/CP_330-Edge_AI-purple?style=for-the-badge)](https://www.samy101.com/edge-ai-25/projects/18-blind-assistance/)
+
 *A real-time, cloud-free gesture recognition system that translates head movements into meaningful messages — running entirely on a wearable microcontroller.*
 
 [![Presentation Video](https://img.shields.io/badge/Google%20Drive-Watch%20Presentation-4285F4?style=for-the-badge&logo=google-drive&logoColor=white)](https://drive.google.com/file/d/1__JJ69PBDf3QR5xZBZMHhklWdVlq01Ug/view?usp=drivesdk)
