@@ -133,6 +133,15 @@ Recognised gestures are broadcast over Wi-Fi UDP to two destinations simultaneou
 </tr>
 </table>
 
+<br>
+
+<div align="center">
+<img src="doc/Figure/Wire Connection Diagram.png" alt="Wiring Diagram" width="600"/>
+<br><em>Complete wiring: I2C OLED and Buzzer connected to Arduino UNO R4 WiFi</em>
+</div>
+
+<br>
+
 ### Bill of Materials
 
 | Component | Role | Interface | Qty |
@@ -171,32 +180,14 @@ All three devices connect to the same Wi-Fi network. Assign static IPs or note t
 
 ### 3.2.1 Data Collection Firmware
 
-#### slave_datacollection.py — Left Nicla Vision
-- Connects to Wi-Fi and reads LSM6DSRX at *50 Hz* (20 ms period)
-- Sends *6 raw floats* [ax2, ay2, az2, gx2, gy2, gz2] as a comma-separated UDP datagram to Master on *port 6000*
-- No timestamp in packet — keeps payload minimal for low-latency streaming
+**slave_datacollection.py — Left Nicla Vision:**  
+This script runs on the slave device, connecting to Wi-Fi and continuously reading data from the LSM6DSRX IMU at a frequency of 50 Hz (20 ms period). It packages the 6 raw floating-point values `[ax2, ay2, az2, gx2, gy2, gz2]` into a comma-separated UDP datagram and transmits it to the master device on port 6000. Notably, the packet excludes a timestamp to keep the payload as minimal as possible, ensuring low-latency streaming.
 
-#### master_datacollection.py — Right Nicla Vision
-- Reads its own IMU at *50 Hz*: [ax1, ay1, az1, gx1, gy1, gz1]
-- Receives Slave 6-axis data from UDP *port 6000* (non-blocking — holds last valid packet if one is missed, initialised to zeros)
-- Combines both into a *13-value packet*:
-  [timestamp, ax1, ay1, az1, gx1, gy1, gz1, ax2, ay2, az2, gx2, gy2, gz2]
-- Streams packet to PC on UDP *port 5005* at *50 Hz*
-- Prints every 10 loops (~5 Hz) for debug monitoring
+**master_datacollection.py — Right Nicla Vision:**  
+Operating on the master device, this script reads its own onboard IMU at 50 Hz while simultaneously receiving the slave's 6-axis data via UDP port 6000. The reception is non-blocking; if a packet is missed, the master retains the last valid data packet (or initializes to zeros). The script then combines both streams into a comprehensive 13-value packet `[timestamp, ax1, ay1, az1, gx1, gy1, gz1, ax2, ay2, az2, gx2, gy2, gz2]` and streams it to the PC on UDP port 5005 at 50 Hz. To facilitate debugging, the system prints status updates every 10 loops (approximately 5 Hz).
 
-#### Data_receive.py — PC Side
-- Binds to UDP *port 5005, prompts for an **activity label, then starts a **5-second countdown*
-- Records for *250 seconds* — skips any packet where len(values) != 13
-- Saves to a timestamped CSV in imu_data/: <activity>_<YYYYMMDD_HHMMSS>.csv
-
-
-*CSV schema:*
-
-timestamp, ax1, ay1, az1, gx1, gy1, gz1, ax2, ay2, az2, gx2, gy2, gz2, activity
-
-
-- Prints rows/sec every second for throughput monitoring
-- Handles KeyboardInterrupt gracefully without data loss
+**Data_receive.py — PC Side:**  
+This script is responsible for data aggregation on the PC. It binds to UDP port 5005 and initiates a session by prompting the user for an activity label, followed by a 5-second countdown. It records data for 250 seconds, intentionally skipping any incomplete packets where the value count does not equal 13. The incoming data is saved into a timestamped CSV file located in the `imu_data/` directory, formatted as `<activity>_<YYYYMMDD_HHMMSS>.csv`. The script gracefully handles keyboard interruptions to prevent data loss and prints the rows processed per second for throughput monitoring.
 
 ### 3.2.2 Inference Firmware — master.py (Right Nicla Vision)
 
@@ -216,26 +207,16 @@ Every 20 ms:
   5. Slide window by 1 sample, repeat
 
 
-- Green LED = slave data received successfully
-- Red LED = slave packet missed (last valid value reused)
-
+- Green LED indicates that slave data was received successfully, while a Red LED indicates a missed packet (where the last valid value is reused).
 
 ### 3.2.3 Inference Firmware — slave.py (Left Nicla Vision)
-- Connects to Wi-Fi and reads LSM6DSRX at *50 Hz*
-- Sends [timestamp, ax2, ay2, az2, gx2, gy2, gz2] to Master on UDP *port 6000*
-- Green LED = Wi-Fi connected, Red LED = transmitting
+The slave device connects to Wi-Fi and continuously samples the LSM6DSRX IMU at 50 Hz. It packages the timestamp and 6-axis data into a UDP datagram and transmits it to the Master on port 6000. Status LEDs are used for visual confirmation: a Green LED indicates a successful Wi-Fi connection, and a Red LED signifies active data transmission.
 
 ### 3.2.4 Output Firmware — arduino_uno.ino (Arduino UNO R4 WiFi)
-- Connects to Wi-Fi and listens on UDP *port 5006*
-- Parses incoming "cls,gesture_name" string
-- Acts *only on gesture change*:
-  - *Idle* → showIdle() — displays Waiting for Gesture... on OLED, silent
-  - *Any gesture* → showGesture(cls, name) — displays class number and name on OLED, triggers buzzOnce() (150 ms beep on Digital pin 9)
-- OLED over I2C (SDA → A4, SCL → A5, address 0x3C)
-- Single buzz on startup confirms Wi-Fi and UDP ready
+The Arduino UNO R4 acts as the output controller. It connects to the local network and listens on UDP port 5006 for incoming gesture classification strings formatted as `"cls,gesture_name"`. To optimize performance, the system only triggers actions when a gesture change is detected. If the gesture is 'Idle', it updates the I2C OLED display (address `0x3C`) to show "Waiting for Gesture..." while remaining silent. For any active gesture, it updates the display with the class number and name, and triggers a brief 150 ms beep using an active buzzer connected to digital pin 9. A single startup buzz confirms that both Wi-Fi and UDP services are ready.
 
 ### 3.2.5 PC Monitor — streamlit_app.py
-- Listens on UDP *port 5005* in a background thread
+The PC monitor application runs a background thread listening on UDP port 5005.
 - Fills a *rolling buffer of 50 raw predictions*
 - Applies *majority vote* with *95% stability threshold* — gesture only updates when one class holds ≥95% of the last 50 samples
 - On confirmed gesture change (non-idle):
@@ -434,6 +415,8 @@ By concatenating both branches, the Dense layer receives the best of both worlds
 - *Small Filters (32/64):* Deliberately kept small to prevent memorization and to fit within Nicla Vision SRAM constraints.
 - *Kernel Size 3:* Scans 3 consecutive timesteps (60 ms at 50 Hz), capturing rapid micro-movements within gestures.
 
+### Training Setup
+
 *   **Data Split:** Implemented a strict **File-Based Split** (80% Train / 20% Validation) to ensure that windows from the same recording never appeared in both sets, preventing data leakage.
 *   **Hyperparameters:** Optimizer: Adam (lr=0.001); Loss: Categorical Crossentropy; Batch Size: 32.
 *   **Callbacks:** Used `EarlyStopping` to halt training when validation loss stopped improving, restoring the best weights.
@@ -444,7 +427,20 @@ The model was evaluated on a 100% "blind" test set of files never seen during tr
 
 *   **Validation Accuracy:** ~85%–90% (realistic, non-overfit performance).
 *   **Confusion Matrix:** Analyzed to confirm that distinct gestures like "Tilt Left" were not confused with "Nods."
-*   **Inference Speed:** Profi*   **Architectural Selection:** The heavy baseline CNN was replaced with a more serialized, filter-efficient design to minimize static RAM footprint.
+*   **Inference Speed:** Profiling confirmed an inference time of ~0.1 ms per window, fitting comfortably within the hardware's real-time requirements.
+
+---
+
+## 6. Model Compression & Efficiency Metrics
+
+To ensure the system remains responsive while handling dual-IMU streams and Wi-Fi communication, we evaluated the efficiency of both our primary and research models. Our goal was to find the "Pareto Optimal" point — the best balance between high accuracy and low resource consumption.
+
+### Techniques Used
+
+*   **Python Transpilation (Decision Tree):** The trained Decision Tree was exported as a self-contained Python `score()` function using **m2cgen**, eliminating any runtime dependency (no TFLite, no NumPy).
+*   **Post-Training Quantization (PTQ):** INT8 quantization was applied to the CNN, converting 32-bit weights into 8-bit integers to run on the microcontroller's integer hardware.
+*   **Quantization-Aware Training (QAT):** 8-bit precision loss was simulated during training to improve the robustness of the quantized model.
+*   **Architectural Selection:** The heavy baseline CNN was replaced with a more serialized, filter-efficient design to minimize static RAM footprint.
 *   **Global Average Pooling (GAP):** GAP replaced traditional Flatten layers, reducing total parameters by ~90% before deployment.
 
 ### Comparative Efficiency Metrics
@@ -457,20 +453,6 @@ The model was evaluated on a 100% "blind" test set of files never seen during tr
 | **Decision Tree (Deployed)** | **1.52 KB** | **< 0.01 ms** | **100%** | **Static Flash** |
 
 ### CNN Optimization Track
-
-| Metric | Heavy CNN Baseline | Optimized Quantized CNN | Improvement |
-| :--- | :--- | :--- | :--- |
-| **Model Size** | 2329.94 KB | **153 KB** | **~12× Smaller** |
-| **Inference Time** | 0.2640 ms | **0.1072 ms** | **~2.5× Faster** |
-| **Test Accuracy** | 95.66% | **85.34%** | −10.32% |
-
-### Analysis and Final Deployment Strategy*Post-Training Quantization (PTQ):** We utilized 8-bit integer quantization to shrink the model size and accelerate inference on the microcontroller’s hardware.
-*   **Quantization Aware Training (QAT):** We simulated the effects of 8-bit precision loss during the training phase to improve the robustness of the optimized model.
-*   **Architectural Selection:** We moved from a heavy baseline architecture to a more serialized, filter-efficient design to minimize the static RAM footprint.
-
-### Efficiency Comparison (CNN Optimization Path)
-
-The table below tracks metrics captured during the transition from the high-precision baseline to the deployment-ready quantized version:
 
 | Metric | Heavy CNN Baseline | Optimized Quantized CNN | Improvement |
 | :--- | :--- | :--- | :--- |
@@ -811,7 +793,7 @@ The development of a dual-sensor wearable on an Edge platform presented several 
 
 | Name | Key Contributions & Responsibilities |
 |:---|:---|
-| **Parthib Kumar Dey** | Hardware Integration, Data Collection Setup, Model Pipeline, Model Deployment, Inference Firmware (master.py & slave.py), Arduino UNO R4 WiFi Firmware (OLED & Buzzer) setup, Streamlit App Development, ntfy Push Notification Integration and Full Demo Recording. |
+| **Parthib Dey** | Hardware Integration, Data Collection Setup, Model Pipeline, Model Deployment, Inference Firmware (master.py & slave.py), Arduino UNO R4 WiFi Firmware (OLED & Buzzer) setup, Streamlit App Development, ntfy Push Notification Integration and Full Demo Recording. |
 | **Abha Singh Sardar** | Data Collection, Multi-axis Feature Engineering and data preprocessing; Model Training and Comparative Evaluation of Keras MLP, Random Forest, and Decision Tree architectures (Final Deployed Model); and Post-Training Quantization performance analysis. |
 | **Maitreyi Tiwari** | Data Collection, Advanced Temporal Data Augmentation and CNN Fine-tuning; Implementation of Quantization-Aware Training (QAT) and Pruning strategies; `ntfy` Mobile Alert System Debugging; Technical Documentation and Presentation Recording. |
 | **Tishha Agrawal** | Data Collection, Design and Development of 1D-CNN Temporal Architecture, Edge Model Optimization (PTQ and Pruning), Streamlit WebApp Debugging, Technical Documentation, and Visual Presentation Design for Project Video. |
