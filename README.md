@@ -43,9 +43,9 @@ Many elderly and differently-abled individuals have severely limited hand mobili
 | **TinyML On-Board** | Zero cloud dependency, zero latency |
 | **OLED + Buzzer** | Dual feedback (visual + audio) to Alert the caregiver in case of an emergency |
 
---
+---
 
-## 3. Hardware Setup
+## 2. Hardware Setup
 
 <div align="center">
 <img src="doc/Figure/Head Sensor Placement Diagram.png" alt="Sensor Placement" width="480"/>
@@ -95,7 +95,7 @@ Many elderly and differently-abled individuals have severely limited hand mobili
 
 ---
 
-## 4. Gesture Vocabulary
+## 3. Gesture Vocabulary
 
 The system recognises 7 states (6 gestures + idle):
 
@@ -111,21 +111,21 @@ The system recognises 7 states (6 gestures + idle):
 
 ---
 
-## 5. Software Architecture
+## 4. Software Architecture
 
-### 5.1 Firmware — `slave.py` (Left Nicla Vision)
+### 4.1 Firmware — `slave.py` (Left Nicla Vision)
 - Connects to Wi-Fi network
 - Reads LSM6DSRX via SPI at **50 Hz** (20 ms period)
 - Packs `[ax2, ay2, az2, gx2, gy2, gz2]` into UDP datagram
 - Sends to Master on **port 6000**
 
-### 5.2 Firmware — `master.py` (Right Nicla Vision)
+### 4.2 Firmware — `master.py` (Right Nicla Vision)
 - Reads its own IMU at 50 Hz: `[ax1, ay1, az1, gx1, gy1, gz1]`
 - Receives Slave data from UDP port 6000 (non-blocking; reuses last value if packet missed)
 - **Data Collection mode:** Streams 13-value CSV rows to PC on port 5005
 - **Inference mode:** Fills sliding window buffer → runs TinyML → drives OLED + Buzzer
 
-### 5.3 Data Collection — `Data_receive.py` (PC)
+### 4.3 Data Collection — `Data_receive.py` (PC)
 - Listens on UDP port 5005
 - Prompts for activity label and records for configurable duration
 - Saves timestamped CSV: `<class>_<CollectorName>_<YYYYMMDD_HHMMSS>.csv`
@@ -133,10 +133,10 @@ The system recognises 7 states (6 gestures + idle):
 
 ---
 
-## 6. Dataset
+## 5. Dataset
 
 ### Collection Summary
-- **Total Samples:** more than 20k samples were recorded for each class which brings us to a total of around 1,40,000 samples overall
+- **Total Samples:** Over 20k samples per class, totaling ~140,000 samples
 - **Sampling Rate:** 50 Hz (20 ms period)
 - **Session Duration:** ~250 seconds per recording
 - **Multi-subject diversity:** multiple collectors with different gesture amplitudes and head sizes
@@ -145,7 +145,7 @@ The system recognises 7 states (6 gestures + idle):
 
 ---
 
-## 7. ML Pipeline & Feature Engineering
+## 6. ML Pipeline & Feature Engineering
 
 <div align="center">
 <img src="doc/Figure/Machine Leaning Pipeline Diagram.png" alt="ML Pipeline" width="700"/>
@@ -207,13 +207,25 @@ During **Tilt Right**: `cross_gx_mean_diff > 0` (right temple dominant).
 | **Decision Tree** | Baseline + interpretable decision rules |
 | **Random Forest** | Robust ensemble baseline |
 | **Keras Dense MLP** | Primary model for TFLite deployment |
-| **Heavy weight CNN model with 2 different branches** | A deep learning model to perfectly extract and utilize the temporal nature of data (was also quantized)|
-| **Light weight CNN model with 4 layers** | A Simpler model with less layers Particularly to facilitate edge deployment(Quantization and pruning was performed) |
 
+**Keras Architecture:**
+```
+Input (148) → Dense(128) + BN + Dropout(0.3)
+            → Dense(64)  + BN + Dropout(0.3)
+            → Dense(32)  + Dropout(0.2)
+            → Dense(7, Softmax)
+
+Total Parameters: 30,663  |  INT8 Size: ~33.6 KB
+```
+
+**Training Setup:**
+- Split: 80% train / 20% test (stratified)
+- Optimizer: Adam (lr=1e-3), Loss: Categorical Crossentropy
+- Callbacks: EarlyStopping (patience=15), ReduceLROnPlateau, ModelCheckpoint
 
 ---
 
-## 8. Model Results
+## 7. Model Results
 
 <div align="center">
 
@@ -223,11 +235,6 @@ During **Tilt Right**: `cross_gx_mean_diff > 0` (right temple dominant).
 | Random Forest | **100.00%** |
 | **Keras TinyMLP** | **100.00%** |
 | INT8 TFLite | **100.00%** |
-| Heavyweight CNN | **95.66%** |
-| Heavyweight CNN quantized | **94.00%** |
-| Lightweight CNN | **96.45%** |
-| Lightweight CNN quantized | **85.24%** |
-
 
 </div>
 
@@ -280,7 +287,7 @@ Every 20ms:
 
 ---
 
-## 10. Repository Structure
+## 8. Repository Structure
 
 ```
 Head-Gesture-Recognition-System/
@@ -328,7 +335,7 @@ Head-Gesture-Recognition-System/
 
 ---
 
-## 11. Getting Started
+## 9. Getting Started
 
 ### Prerequisites
 
@@ -371,17 +378,11 @@ Outputs will be saved to `model_output/`.
 3. Flash updated `master.py` to the Master Nicla Vision
 4. Wear the device and test live gesture recognition
 
----
-
-
----
-
-
 > **Course:** CP 330 — Edge AI &nbsp;|&nbsp; **Instructor:** Prof. Pandarasamy Arjunan &nbsp;|&nbsp; Indian Institute of Science (IISc), Bangalore, Semester 2, 2026
 
 ---
 
-## 14. References
+## 10. References
 
 [1] Gouwanda, D., & Senanayake, S. A. (2011). Identifying gait asymmetry using gyroscopes—A cross-correlation and Normalized Symmetry Index approach. *Journal of Biomechanics*, 44(5), 972–978.
 
